@@ -125,23 +125,22 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 
 # Build shared libraries
-add_library(Cholesky SHARED src/cholesky.cpp)
-add_library(Linsolve SHARED src/linsolve.cpp)
-add_library(Eigensolve SHARED src/eigensolve.cpp)
-add_library(Qbmm SHARED src/qmom_profiler.cpp src/qmom.cpp src/core_inversion.cpp)
+add_library(LinAlg SHARED src/cholesky.cpp src/linsolve.cpp src/eigensolve.cpp)
+add_library(Qbmm SHARED src/qmom.cpp src/core_inversion.cpp)
+add_library(QbmmProfiling SHARED src/qmom_profiler.cpp)
 
 # Build and link executables
 add_executable(core_inversion_benchmark applications/core_inversion_benchmark.cpp)
-target_link_libraries(core_inversion_benchmark Qbmm Linsolve Eigensolve Cholesky $<LINK_ONLY:MKL::MKL>)
+target_link_libraries(core_inversion_benchmark Qbmm LinAlg $<LINK_ONLY:MKL::MKL>)
 
 add_executable(eigensolver_benchmark_general applications/eigensolver_benchmark_general.cpp)
-target_link_libraries(eigensolver_benchmark_general Eigensolve $<LINK_ONLY:MKL::MKL>)
+target_link_libraries(eigensolver_benchmark_general LinAlg $<LINK_ONLY:MKL::MKL>)
 
 add_executable(linsolver_benchmark applications/linsolver_benchmark.cpp)
-target_link_libraries(linsolver_benchmark Linsolve $<LINK_ONLY:MKL::MKL>)
+target_link_libraries(linsolver_benchmark LinAlg $<LINK_ONLY:MKL::MKL>)
 
 add_executable(eigensolver_benchmark_moments applications/eigensolver_benchmark_moments.cpp)
-target_link_libraries(eigensolver_benchmark_moments Qbmm Linsolve Eigensolve Cholesky $<LINK_ONLY:MKL::MKL>)
+target_link_libraries(eigensolver_benchmark_moments Qbmm LinAlg $<LINK_ONLY:MKL::MKL>)
 
 #############################################################################
 #############################################################################
@@ -162,23 +161,23 @@ if (WITH_TESTING)
     add_test(NAME test_build_id COMMAND test_build_id)
 
     add_executable(test_cholesky tests/test_cholesky.cpp)
-    target_link_libraries(test_cholesky Cholesky $<LINK_ONLY:MKL::MKL>)
+    target_link_libraries(test_cholesky LinAlg $<LINK_ONLY:MKL::MKL>)
     add_test(NAME test_cholesky COMMAND test_cholesky)
 
     add_executable(test_eigensolve tests/test_eigensolve.cpp)
-    target_link_libraries(test_eigensolve Eigensolve $<LINK_ONLY:MKL::MKL>)
+    target_link_libraries(test_eigensolve LinAlg $<LINK_ONLY:MKL::MKL>)
     add_test(NAME test_eigensolve COMMAND test_eigensolve)
 
     add_executable(test_linsolve tests/test_linsolve.cpp)
-    target_link_libraries(test_linsolve Linsolve $<LINK_ONLY:MKL::MKL>)
+    target_link_libraries(test_linsolve LinAlg $<LINK_ONLY:MKL::MKL>)
     add_test(NAME test_linsolve COMMAND test_linsolve)
 
     add_executable(test_core_inversion tests/test_core_inversion.cpp)
-    target_link_libraries(test_core_inversion Qbmm Linsolve Eigensolve Cholesky $<LINK_ONLY:MKL::MKL>)
+    target_link_libraries(test_core_inversion Qbmm LinAlg $<LINK_ONLY:MKL::MKL>)
     add_test(NAME test_core_inversion COMMAND test_core_inversion)
 
     add_executable(test_qmom tests/test_qmom.cpp)
-    target_link_libraries(test_qmom Qbmm Linsolve Eigensolve Cholesky $<LINK_ONLY:MKL::MKL>)
+    target_link_libraries(test_qmom Qbmm LinAlg $<LINK_ONLY:MKL::MKL>)
     add_test(NAME test_qmom COMMAND test_qmom)
 
     # Enable test for memory leaks
