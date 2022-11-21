@@ -1,0 +1,24 @@
+/**
+ * @file build_id.hpp.in
+ * @author M. Puetz
+ * @brief Incomplete header as input for CMake to assign build ID. 
+ *
+ * The build ID is generated from compiler information and the current git status (tag/commit). The complete header file 'git_build_id.hpp' is generated in the build directory.
+ *
+ * @date 2022-11-17
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
+
+#ifndef BUILD_ID_HPP
+#define BUILD_ID_HPP
+
+#include <string>
+
+constexpr const char CMAKE_GIT_BUILD_ID[] = "@CMAKE_GIT_BUILD_ID@";
+
+static_assert(sizeof(CMAKE_GIT_BUILD_ID) > 1);
+static_assert(CMAKE_GIT_BUILD_ID[0] != '@');
+
+#endif // BUILD_ID_HPP
