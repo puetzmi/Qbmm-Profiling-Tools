@@ -96,7 +96,7 @@ add_custom_target(version ALL
   ${CMAKE_COMMAND} -D SRC=${CMAKE_CURRENT_SOURCE_DIR}/include/build_id.hpp.in
                    -D DST=${CMAKE_CURRENT_BINARY_DIR}/include/build_id.hpp
                    -D GIT_EXECUTABLE=${GIT_EXECUTABLE}
-                   -D COMPILER_ID=${CMAKE_CXX_COMPILER_ID}-${CMAKE_CXX_COMPILER_VERSION}
+                   -D COMPILER_INFO=${CMAKE_CXX_COMPILER_ID}-${CMAKE_CXX_COMPILER_VERSION}-${CMAKE_BUILD_TYPE}
                    -P ${CMAKE_CURRENT_SOURCE_DIR}/GenerateBuildIdHeader.cmake
 )
 
