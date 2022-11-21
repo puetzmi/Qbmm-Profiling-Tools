@@ -80,9 +80,9 @@ int main (int argc, char *argv[]) {
     // Generate all values of main and sub-/superdiagonal elements and write to output files
     std::printf("Generating random symmetric tridiagonal matrices...\n");
     std::FILE *mainDiagonalOutputFile = 
-        openOutputFile("diag0.dat", appName, CMAKE_GIT_BUILD_ID);
+        openOutputFile("diag0.out", appName, CMAKE_GIT_BUILD_ID);
     std::FILE *superDiagonalOutputFile =
-        openOutputFile("diag1.dat", appName, CMAKE_GIT_BUILD_ID);
+        openOutputFile("diag1.out", appName, CMAKE_GIT_BUILD_ID);
     for (int i=0; i<nMatrices; i++) {
         double *mainDiagonal = mainDiagonals + i*nMax;
         double *superDiagonal = superDiagonals + i*(nMax - 1);
