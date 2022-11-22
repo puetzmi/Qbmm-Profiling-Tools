@@ -1,6 +1,23 @@
+/**
+ * @file physical_models.cpp
+ * @author M. Puetz
+ * @brief Implementation of the `PhysicalModel` class and derived classes.
+ * @date 2022-11-22
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
+
 #include "physical_models.hpp"
 #include <stdexcept>
 
+
+// Sign function for convenience
+template<class T=double>
+inline int signFunction(T x) {
+    return static_cast<int>((x > 0) - (x < 0));
+}
 
 PhysicalModel::PhysicalModel()
 {
@@ -52,7 +69,7 @@ int FokkerPlanckEquation::computeMomentsRateOfChange(double nodeValue, int nMome
 {
 
         // Sign of internal coordinate value at node
-        int sign = (nodeValue > 0) - (nodeValue < 0);
+        int sign = signFunction(nodeValue);
 
         // No change if value is 'numerically zero'
         if (sign*nodeValue < std::numeric_limits<double>::epsilon()) {
