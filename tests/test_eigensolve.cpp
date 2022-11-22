@@ -33,58 +33,75 @@ void testAllEigenValues(int n, const std::string& eigenSolverTypeName,
         double *mainDiag, double *firstDiag, [[maybe_unused]] double absTol)
 {
 
+    [[maybe_unused]] int info;
     // Test computation of eigenvalues and eigenvectors
     auto eigenSolver = RealEigenSolver::makeUnique(eigenSolverTypeName, n, EigenProblemType::EigenPairs);
-
-    [[maybe_unused]] int info = eigenSolver->compute(mainDiag, firstDiag);
-    assert(info == 0);
-
     auto eigenVals = eigenSolver->eigenValues();
     auto eigenVecs = eigenSolver->eigenVectors();
 
-    // As the matrix, say A, is symmetric, the equation 'A = V * lambda * V^T' must be satisfied,
-    // where 'V' is the matrix of eigenvectors and lambda is the diagonal matrix of eigenvalues
-    const double *V = eigenVecs.get();      // eigenvectors
-    double *lambda = new double[n*n]();     // diagonal matrix of eigenvalues
-    for (int i=0; i<n; i++) {
-        lambda[i*n + i] = eigenVals[i];
+
+    // If size is > 2 test twice, once with decreased size to make sure that works
+    int end = 1;
+    if (n > 2) {
+        n--;
+        eigenSolver->setSize(n);
+        end = 2;
     }
-    double *A = new double[n*n]();          // result
+    for (int j=0; j<end; j++) {
 
-    // A <- V*lambda
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1, V, n, lambda, n, 0, A, n);
+        info = eigenSolver->compute(mainDiag, firstDiag);
+        assert(info == 0);
 
-    // lambda <- A*V^T
-    for (int i=0; i<n; i++) {
-        lambda[i*n + i] = 0.;
-    }
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans, n, n, n, 1, A, n, V, n, 0, lambda, n);
+        eigenVals = eigenSolver->eigenValues();
+        eigenVecs = eigenSolver->eigenVectors();
 
-    // A <- lambda
-    delete[] A;
-    A = lambda;
-
-    // Ensure approximate equality with given tolerance
-    for (int i=0; i<n; i++) {
-        for (int j=0; j<n; j++) {
-            [[maybe_unused]] double aijRef = 0.;
-            switch (i-j) {
-                case 0:     //main diagonal
-                    aijRef = mainDiag[i];
-                    break;
-                case 1:     // first lower diagonal
-                    aijRef = firstDiag[j];
-                    break;
-                case -1:    // first upper diagonal
-                    aijRef = firstDiag[i];
-                    break;
-            }
-
-            assert(std::fabs(aijRef - A[i*n + j]) < absTol);
+        // As the matrix, say A, is symmetric, the equation 'A = V * lambda * V^T' must be satisfied,
+        // where 'V' is the matrix of eigenvectors and lambda is the diagonal matrix of eigenvalues
+        const double *V = eigenVecs.get();      // eigenvectors
+        double *lambda = new double[n*n]();     // diagonal matrix of eigenvalues
+        for (int i=0; i<n; i++) {
+            lambda[i*n + i] = eigenVals[i];
         }
-    }
-    delete[] lambda;
+        double *A = new double[n*n]();          // result
 
+        // A <- V*lambda
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1, V, n, lambda, n, 0, A, n);
+
+        // lambda <- A*V^T
+        for (int i=0; i<n; i++) {
+            lambda[i*n + i] = 0.;
+        }
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans, n, n, n, 1, A, n, V, n, 0, lambda, n);
+
+        // A <- lambda
+        delete[] A;
+        A = lambda;
+
+        // Ensure approximate equality with given tolerance
+        for (int i=0; i<n; i++) {
+            for (int j=0; j<n; j++) {
+                [[maybe_unused]] double aijRef = 0.;
+                switch (i-j) {
+                    case 0:     //main diagonal
+                        aijRef = mainDiag[i];
+                        break;
+                    case 1:     // first lower diagonal
+                        aijRef = firstDiag[j];
+                        break;
+                    case -1:    // first upper diagonal
+                        aijRef = firstDiag[i];
+                        break;
+                }
+
+                assert(std::fabs(aijRef - A[i*n + j]) < absTol);
+            }
+        }
+        delete[] lambda;
+
+        eigenSolver->setSize(n);
+    }
+
+    eigenSolver->setSize(n);
 
     // Now compute only eigenvalues to make sure that there are no memory-related issues
     auto eigenSolver1 = RealEigenSolver::makeUnique(eigenSolverTypeName, n, EigenProblemType::EigenValsOnly);
@@ -133,12 +150,8 @@ int main () {
     for (auto& eigenSolverTypeName : allEigenSolverTypeNames) {
         // Test for all n
         for (int n=nMin; n<nMax+1; n++) {
-
-            if (eigenSolverTypeName != "EigenTridiagonalSymmLapackRRR") {
                 testAllEigenValues(n, eigenSolverTypeName, mainDiag, firstDiag, absTol);
-            }
         }
-        break;
     }
 
     mkl_free(mainDiag);

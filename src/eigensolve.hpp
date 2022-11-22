@@ -545,7 +545,6 @@ private:
     VectorMap mainDiagMap_;         ///< Eigen::Map mapping Vector to raw pointer containing main diagonal data and vice versa.
     VectorMap firstDiagMap_;        ///< Eigen::Map mapping Vector to raw pointer containing sub-/superdiagonal data and vice versa.
     VectorMap eigenValsMap_;        ///< Eigen::Map mapping eigenvalues from Vector to raw pointer and vice versa
-    MatrixMap eigenVecsMap_;        ///< Eigen::Map mapping eigenvectors from Matrix to raw pointer and vice versa
 
     static inline bool registered_ = REGISTER_TYPE(RealEigenSolverFactory, EigenTridiagonalSymmEigenlibQR);
 

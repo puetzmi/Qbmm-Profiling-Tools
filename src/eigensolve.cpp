@@ -80,20 +80,29 @@ int EigenTridiagonalSymmLapackRRR::compute(double *mainDiag, double *firstDiag) 
 }
 
 
-int EigenTridiagonalSymmEigenlibQR::compute(double *mainDiag, double *firstDiag) {
+int EigenTridiagonalSymmEigenlibQR::compute(double *mainDiag, double *firstDiag)
+{
 
-    for (int i=0; i<size_; i++) {
+    for (int i=0; i<size_-1; i++) {
         mainDiag_[i] = mainDiag[i];
         firstDiag_[i] = firstDiag[i];
     }
+    mainDiag_[size_-1] = mainDiag[size_-1];
 
-    selfAdjointEigenSolver_.computeFromTridiagonal(mainDiagMap_, firstDiagMap_, eigenProblemType_);
+    selfAdjointEigenSolver_.computeFromTridiagonal(
+        mainDiagMap_.head(size_), firstDiagMap_.head(size_ - 1), eigenProblemType_
+    );
 
-    eigenValsMap_ = selfAdjointEigenSolver_.eigenvalues();
+    eigenValsMap_.head(size_) = selfAdjointEigenSolver_.eigenvalues();
     
     // This condition is necessary for the program not to crash in debug mode
     if (eigenProblemType_ == Eigen::DecompositionOptions::ComputeEigenvectors) {
-        eigenVecsMap_ = selfAdjointEigenSolver_.eigenvectors();
+        for (int i=0; i<size_; i++) {
+            for (int j=0; j<size_; j++) {
+                eigenVecs_[i*size_ + j] = selfAdjointEigenSolver_.eigenvectors()(i,j);
+            }
+        }
+        //eigenVecs_ = selfAdjointEigenSolver_.eigenvectors().data();
     }
 
     return 0;
@@ -229,8 +238,7 @@ EigenTridiagonalSymmEigenlibQR::EigenTridiagonalSymmEigenlibQR(int maxSize, Eige
                         : Eigen::DecompositionOptions::EigenvaluesOnly),
     mainDiagMap_(mainDiag_, size_),
     firstDiagMap_(firstDiag_, size_ - 1),
-    eigenValsMap_(eigenVals_.get(), size_),
-    eigenVecsMap_(eigenVecs_.get(), size_, size_)
+    eigenValsMap_(eigenVals_.get(), size_)
 {
 }
 
