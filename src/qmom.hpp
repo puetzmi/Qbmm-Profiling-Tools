@@ -20,6 +20,19 @@
 #include "factory.hpp"
 
 
+class Qmom;     // forward declaration
+
+/// Factory for `Qmom` objects
+using QmomFactory = 
+    Factory<Qmom,
+        int,    // nMoments
+        std::shared_ptr<CoreInversionAlgorithm>,    //coreInversion
+        std::shared_ptr<RealEigenSolver>,   // eigenSolver
+        std::shared_ptr<LinearSolver>,  // linearSolver,
+        std::function<
+        int(double * const, double * const, int, int, double*)> //momentsRateOfChangeFunction
+    >;
+
 /**
  * @brief Class implementing methods derived from the quadrature method of moments @cite mcgraw1997.
  * 
@@ -164,6 +177,40 @@ public:
 
 
     /**
+     * @brief Create new `Qmom` object of specified type (using factory) and return shared pointer to it.
+     * 
+     * @param typeName Type name corresponding to key in the map in `QmomFactory`.
+     * @param nMoments  Number of moments.
+     * @param coreInversion Shared pointer to `CoreInversionAlgorithm` object to compute the Jacobi matrix from moments.
+     * @param eigenSolver Shared pointer to `EigenSolver` object to compute the eigenvalues (and possibly -vectors) of the tridiagonal Jacobi matrix.
+     * @param linearSolver Shared pointer to `LinearSolver` to compute quadrature weights from Vandermonde system, or null pointer if the weights are to be computed from the eigenvectors of the Jacobi matrix.
+     * @param momentsRateOfChangeFunction Function to compute moments' rate of change, see corresponing attribute `Qmom::momantsRateOfChangeFunction_`.
+     * @return std::shared_ptr<Qmom> Shared pointer to new `Qmom` object.
+     */
+    static std::shared_ptr<Qmom> makeShared(const std::string &typeName, int nMoments, 
+        std::shared_ptr<CoreInversionAlgorithm> coreInversion, std::shared_ptr<RealEigenSolver> eigenSolver,
+        std::shared_ptr<LinearSolver> linearSolver,
+        std::function<int(double * const, double * const, int, int, double*)>momentsRateOfChangeFunction);
+
+
+    /**
+     * @brief Create new `Qmom` object of specified type (using factory) and return unique pointer to it.
+     * 
+     * @param typeName Type name corresponding to key in the map in `QmomFactory`.
+     * @param nMoments  Number of moments.
+     * @param coreInversion Shared pointer to `CoreInversionAlgorithm` object to compute the Jacobi matrix from moments.
+     * @param eigenSolver Shared pointer to `EigenSolver` object to compute the eigenvalues (and possibly -vectors) of the tridiagonal Jacobi matrix.
+     * @param linearSolver Shared pointer to `LinearSolver` to compute quadrature weights from Vandermonde system, or null pointer if the weights are to be computed from the eigenvectors of the Jacobi matrix.
+     * @param momentsRateOfChangeFunction Function to compute moments' rate of change, see corresponing attribute `Qmom::momantsRateOfChangeFunction_`.
+     * @return std::unique_ptr<Qmom> Unique pointer to new `Qmom` object.
+     */
+    static std::unique_ptr<Qmom> makeUnique(const std::string &typeName, int nMoments, 
+        std::shared_ptr<CoreInversionAlgorithm> coreInversion, std::shared_ptr<RealEigenSolver> eigenSolver,
+        std::shared_ptr<LinearSolver> linearSolver,
+        std::function<int(double * const, double * const, int, int, double*)>momentsRateOfChangeFunction);
+
+
+    /**
      * @brief Essential function performing all steps stated in the class description.
      * 
      * @param m Set of moments.
@@ -282,6 +329,10 @@ public:
     virtual int numberOfNodes(int) const;
     virtual int computeQuadrature(double *moments);
 
+private:
+
+    static bool inline registered_ = REGISTER_TYPE(QmomFactory, QmomStd);
+
 };
 
 
@@ -318,6 +369,11 @@ public:
 
     virtual int numberOfNodes(int) const;
     virtual int computeQuadrature(double *moments);
+
+
+private:
+
+    static bool inline registered_ = REGISTER_TYPE(QmomFactory, QmomGaG);
 
 };
 

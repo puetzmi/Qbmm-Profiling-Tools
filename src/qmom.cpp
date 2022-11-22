@@ -65,6 +65,26 @@ Qmom::~Qmom() {
 }
 
 
+std::shared_ptr<Qmom> Qmom::makeShared(const std::string &typeName, int nMoments, 
+    std::shared_ptr<CoreInversionAlgorithm> coreInversion, std::shared_ptr<RealEigenSolver> eigenSolver,
+    std::shared_ptr<LinearSolver> linearSolver,
+    std::function<int(double * const, double * const, int, int, double*)>momentsRateOfChangeFunction)
+{
+    return QmomFactory::makeShared(typeName, nMoments, coreInversion, eigenSolver,
+        linearSolver, momentsRateOfChangeFunction);
+}
+
+
+std::unique_ptr<Qmom> Qmom::makeUnique(const std::string &typeName, int nMoments, 
+    std::shared_ptr<CoreInversionAlgorithm> coreInversion, std::shared_ptr<RealEigenSolver> eigenSolver, 
+    std::shared_ptr<LinearSolver> linearSolver,
+    std::function<int(double * const, double * const, int, int, double*)>momentsRateOfChangeFunction)
+{
+    return QmomFactory::makeUnique(typeName, nMoments, coreInversion, eigenSolver,
+        linearSolver, momentsRateOfChangeFunction);
+}
+
+
 void Qmom::updateVandermondeMatrix(int end, int begin) {
 
     double *Vim1;                   // (i-1)th row
