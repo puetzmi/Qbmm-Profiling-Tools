@@ -128,6 +128,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 add_library(LinAlg SHARED src/cholesky.cpp src/linsolve.cpp src/eigensolve.cpp)
 add_library(Qbmm SHARED src/qmom.cpp src/core_inversion.cpp)
 add_library(QbmmProfiling SHARED src/qmom_profiler.cpp)
+add_library(PhysicalModels SHARED src/physical_models.cpp)
 
 # Build and link executables
 add_executable(core_inversion_benchmark applications/core_inversion_benchmark.cpp)
