@@ -26,4 +26,6 @@ static_assert(MALLOC_ALIGN == 16 || MALLOC_ALIGN == 32
             || MALLOC_ALIGN == 64 || MALLOC_ALIGN == 128);
 
 
+constexpr int DEFAULT_RANDOM_SEED = 125125;
+
 #endif // DEFS_HPP

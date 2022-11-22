@@ -87,7 +87,7 @@ int main ()
     double absTol = 1e-7;
 
 
-    int seed = 1120012;
+    const int seed = DEFAULT_RANDOM_SEED;
     std::mt19937 randomGen;
     randomGen.seed(seed);
 

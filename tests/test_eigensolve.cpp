@@ -106,7 +106,7 @@ void testAllEigenValues(int n, const std::string& eigenSolverTypeName,
 int main () {
 
     double absTol = 1e-12;
-    int randomSeed = 1120012;
+    const int randomSeed = DEFAULT_RANDOM_SEED;
     std::mt19937_64 randomGen;
     randomGen.seed(randomSeed);
 

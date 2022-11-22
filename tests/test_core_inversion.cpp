@@ -29,7 +29,7 @@ int main() {
     int nMax = 10;
 
     double relTol = 1e-6;
-    int randomSeed = 1120012;
+    const int randomSeed = DEFAULT_RANDOM_SEED;
     std::mt19937_64 randomGen;
     randomGen.seed(randomSeed);
 

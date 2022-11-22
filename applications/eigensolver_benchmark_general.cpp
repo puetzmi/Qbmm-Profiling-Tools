@@ -1,5 +1,5 @@
 /**
- * @file eigensolver_benchmark.cpp
+ * @file eigensolver_benchmark_general.cpp
  * @author M. Puetz
  * @brief This application compares the performance and accuracy of different eigen solvers for different tridiagonal Jacobi matrices.
  * @date 2022-10-10
@@ -22,7 +22,7 @@ int main (int argc, char *argv[]) {
     const std::string appName = "eigensolver_benchmark_general";
 
     // Default parameters
-    int defaultRandomSeed = 1120012;
+    int defaultRandomSeed = DEFAULT_RANDOM_SEED;
     std::string defaultOutputFilename = "eigensolver_benchmark.out";
 
 
@@ -47,6 +47,7 @@ int main (int argc, char *argv[]) {
     int nMatrices = parseArgument<int>(argc, argv, "n_matrices");
     int nMin = parseArgument<int>(argc, argv, "n_min");
     int nMax = parseArgument<int>(argc, argv, "n_max");
+    int nSizes = parseArgument<int>(argc, argv, "n_sizes");
     int nExecutions = parseArgument<int>(argc, argv, "n_exec");
 
     bool computeEigenvectors = parseArgument<bool>(argc, argv, "compute_eigenvectors");
@@ -100,10 +101,16 @@ int main (int argc, char *argv[]) {
     closeOutputFile(mainDiagonalOutputFile);
     closeOutputFile(superDiagonalOutputFile);
 
+    // Linearly uniform spacing
+    std::vector<int> nAll(nSizes);
+    double delta = (nMax - nMin)/(nSizes - 1);
+    for (int i=0; i<nSizes; i++) {
+        nAll[i] = static_cast<int>(nMin + i*delta + 0.5);   // round to int
+    }
 
     // Run eigenvalue algorithms and measure CPU times
     std::printf("Measuring computing times of eigenvalue algorithms...\n");
-    for (int n=nMin; n<=nMax; n++) {
+    for (const int n : nAll) {
         std::printf("n = %d\n", n);
 
         for (int i=0; i<nMatrices; i++) {

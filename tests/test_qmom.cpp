@@ -33,7 +33,7 @@ int main ()
 
     int minNumberOfMoments = 4;
     int maxNumberOfMoments = 20;
-    int seed = 1120012;
+    const int seed = DEFAULT_RANDOM_SEED;
     double relTol = 1e-10;
 
     std::mt19937 randomGen;
