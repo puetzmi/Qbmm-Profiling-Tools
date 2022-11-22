@@ -23,16 +23,14 @@
 /**
  * @brief Test linear solver of given type using a random Vandermonde system of given size.
  * 
- * @param linearSolverTypeName Type name of the linear solver to be tested.
+ * @param linearSolverPtr Shared pointer to linear solver object.
  * @param n Size of the linear system.
  * @param randomGen Pseudo-random number generator.
  * @param absTol Absolute tolerance used for comparison between results and reference.
  */
-void test(const std::string& linearSolverTypeName, int n, std::mt19937& randomGen, double absTol) {
+void test(std::shared_ptr<LinearSolver> linearSolverPtr, int n, std::mt19937& randomGen, double absTol) {
 
     std::normal_distribution<double> normal{};
-
-    auto linearSolverPtr = LinearSolver::makeShared(linearSolverTypeName, n);
 
     double *aPtr = static_cast<double*>(mkl_malloc(n*n*sizeof(double), MALLOC_ALIGN));
     double *xPtr = static_cast<double*>(mkl_malloc(n*sizeof(double), MALLOC_ALIGN));
@@ -95,7 +93,13 @@ int main ()
     const std::vector<std::string> &allLinearSolverTypeNames = LinearSolverFactory::keys();
     for (auto linearSolverTypeName : allLinearSolverTypeNames) {
         for (int n=nMin; n<=nMax; n++) {
-            test(linearSolverTypeName, n, randomGen, absTol);
+
+            auto linearSolverPtr = LinearSolver::makeShared(linearSolverTypeName, n);
+            test(linearSolverPtr, n, randomGen, absTol);
+
+            // test if decreasing the size works
+            linearSolverPtr->setSize(n-1);
+            test(linearSolverPtr, n-1, randomGen, absTol);
         }
     }
 

@@ -36,9 +36,10 @@ int solveVandermondeSystemBjorckPereyra(int n, double *V, double *b, double *x) 
 }
 
 
-LinearSolver::LinearSolver(unsigned int size)
+LinearSolver::LinearSolver(unsigned int maxSize)
     :
-    size_(size)
+    maxSize_(maxSize),
+    size_(maxSize)
 {
 }
 
@@ -48,15 +49,15 @@ LinearSolver::~LinearSolver()
 }
 
 
-std::unique_ptr<LinearSolver> LinearSolver::makeUnique(const std::string &typeName, unsigned int size)
+std::unique_ptr<LinearSolver> LinearSolver::makeUnique(const std::string &typeName, unsigned int maxSize)
 {
-    return LinearSolverFactory::makeUnique(typeName, size);
+    return LinearSolverFactory::makeUnique(typeName, maxSize);
 }
 
 
-std::shared_ptr<LinearSolver> LinearSolver::makeShared(const std::string &typeName, unsigned int size)
+std::shared_ptr<LinearSolver> LinearSolver::makeShared(const std::string &typeName, unsigned int maxSize)
 {
-    return LinearSolverFactory::makeShared(typeName, size);
+    return LinearSolverFactory::makeShared(typeName, maxSize);
 }
 
 
@@ -75,9 +76,9 @@ int LinearSolver::operator()(double* A, double* b, double* x) {
 }
 
 
-LinearVandermondeSolver::LinearVandermondeSolver(unsigned int size)
+LinearVandermondeSolver::LinearVandermondeSolver(unsigned int maxSize)
     :
-    LinearSolver(size)
+    LinearSolver(maxSize)
 {
 }
 
@@ -103,11 +104,11 @@ int LinearVandermondeSolver::endOfElementsNeeded() const {
 }
 
 
-LinearLapackGesvSolver::LinearLapackGesvSolver(unsigned int size)
+LinearLapackGesvSolver::LinearLapackGesvSolver(unsigned int maxSize)
     :
-    LinearSolver(size),
-    work_(static_cast<double*>(mkl_malloc(size_*size_*sizeof(double), MALLOC_ALIGN))),
-    pivotIndices_(static_cast<lapack_int*>(mkl_malloc(size_*sizeof(lapack_int), MALLOC_ALIGN))) 
+    LinearSolver(maxSize),
+    work_(static_cast<double*>(mkl_malloc(maxSize_*maxSize_*sizeof(double), MALLOC_ALIGN))),
+    pivotIndices_(static_cast<lapack_int*>(mkl_malloc(maxSize_*sizeof(lapack_int), MALLOC_ALIGN))) 
 {
 }
 
@@ -138,12 +139,12 @@ int LinearLapackGesvSolver::solve(double *A, double *b, double *x)
 }
 
 
-LinearEigenlibPartialPivLuSolver::LinearEigenlibPartialPivLuSolver(unsigned int size)
+LinearEigenlibPartialPivLuSolver::LinearEigenlibPartialPivLuSolver(unsigned int maxSize)
     :
-    LinearSolver(size),
-    matrixMap_(nullptr, size_, size_),
-    xVectorMap_(nullptr, size_),
-    bVectorMap_(nullptr, size_),
+    LinearSolver(maxSize),
+    matrixMap_(nullptr, maxSize_, maxSize_),
+    xVectorMap_(nullptr, maxSize_),
+    bVectorMap_(nullptr, maxSize_),
     partialPivLuSolver_(nullptr)
 {
 }
@@ -157,20 +158,30 @@ LinearEigenlibPartialPivLuSolver::~LinearEigenlibPartialPivLuSolver()
 int LinearEigenlibPartialPivLuSolver::solve(double *A, double *b, double *x)
 {
 
-    // Assign pointers to matrix, r.h.s vector and solution vector if necessary
-    if (matrixMap_.data() != A) {
+    // If size has changed maps must be adjusted to the new one
+    if (bVectorMap_.size() != size_) {
         new (&matrixMap_) MatrixMap(A, size_, size_);
-    }
-    if (bVectorMap_.data() != b) {
         new (&bVectorMap_) VectorMap(b, size_);
-    }
-    if (xVectorMap_.data() != x) {
         new (&xVectorMap_) VectorMap(x, size_);
+    }
+    else
+    {
+        // Assign pointers to matrix, r.h.s vector and solution vector if
+        // location has changed
+        if (matrixMap_.data() != A) {
+            new (&matrixMap_) MatrixMap(A, size_, size_);
+        }
+        if (bVectorMap_.data() != b) {
+            new (&bVectorMap_) VectorMap(b, size_);
+        }
+        if (xVectorMap_.data() != x) {
+            new (&xVectorMap_) VectorMap(x, size_);
+        }
     }
 
     if (!partialPivLuSolver_) {
         partialPivLuSolver_.reset(
-            new Eigen::PartialPivLU<Matrix>(matrixMap_)
+            new Eigen::PartialPivLU<Matrix>(matrixMap_) // LU decomposition is computed on construction
         );
     }
     else {

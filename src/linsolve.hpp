@@ -42,13 +42,14 @@ int solveVandermondeSystemBjorckPereyra(int n, double *V, double *b, double *x);
  */
 class LinearSolver 
 {
+
 public:
     /**
      * @brief Construct a new LinearSolver object.
      * 
-     * @param size Size of the linear system.
+     * @param maxSize Maximum size of the linear system.
      */
-    LinearSolver(unsigned int size);
+    LinearSolver(unsigned int maxSize);
 
     /**
      * @brief Destroy the LinearSolver object.
@@ -61,20 +62,20 @@ public:
      * @brief Create new `LinearSolver` object of specified type (using factory) and return unique pointer to it.
      * 
      * @param typeName Type name corresponding to key in the map in `LinearSolverFactory`.
-     * @param size Size of the linear system.
+     * @param maxSize Maximum size of the linear system.
      * @return std::unique_ptr<LinearSolver> Unique pointer to new `LinearSolver` object.
      */
-    static std::unique_ptr<LinearSolver> makeUnique(const std::string &typeName, unsigned int size);
+    static std::unique_ptr<LinearSolver> makeUnique(const std::string &typeName, unsigned int maxSize);
 
 
     /**
      * @brief Create new `LinearSolver` object of specified type (using factory) and return shared pointer to it.
      * 
      * @param typeName Type name corresponding to key in the map in `LinearSolverFactory`.
-     * @param size Size of the linear system.
+     * @param maxSize Maximum size of the linear system.
      * @return std::shared_ptr<LinearSolver> shared pointer to new `LinearSolver` object.
      */
-    static std::shared_ptr<LinearSolver> makeShared(const std::string &typeName, unsigned int size);
+    static std::shared_ptr<LinearSolver> makeShared(const std::string &typeName, unsigned int maxSize);
 
 
     /**
@@ -122,9 +123,24 @@ public:
     virtual int endOfElementsNeeded() const;
 
 
+    /**
+     * @brief Set size of the linear system.
+     * 
+     * @param newSize New size of the linear system, must satisfy `newSize <= maxSize`.
+     */
+    void setSize(unsigned int newSize) {
+        if (newSize > maxSize_) [[unlikely]] {
+            std::string errorMessage = "The parameter `newSize` must not be greater "
+                "than `LinearSolver::maxSize_`.";
+            throw std::invalid_argument(errorMessage);
+        }
+        size_ = newSize;
+    }
+
 protected:
 
-    const unsigned int size_;       ///< Size of the linear system.
+    const unsigned int maxSize_;    ///< Maximum size of the linear system.
+    unsigned int size_;             ///< Size of the linear system.
 
 };
 
@@ -140,9 +156,9 @@ public:
     /**
      * @brief Construct a new LinearVandermondeSolver object.
      * 
-     * @param size Size of the linear system.
+     * @param maxSize Maximum size of the linear system.
      */
-    LinearVandermondeSolver(unsigned int size);
+    LinearVandermondeSolver(unsigned int maxSize);
 
     /**
      * @brief Destroy the LinearVandermondeSolver object.
@@ -184,9 +200,9 @@ public:
     /**
      * @brief Construct a new LinearLapackGesvSolver object.
      * 
-     * @param size Size of the linear system.
+     * @param maxSize Maximum size of the linear system.
      */
-    LinearLapackGesvSolver(unsigned int size);
+    LinearLapackGesvSolver(unsigned int maxSize);
 
     /**
      * @brief Destroy the LinearLapackGesvSolver object.
@@ -227,9 +243,9 @@ public:
     /**
      * @brief Construct a new `LinearEigenlibPartialPivLuSolver` object.
      * 
-     * @param size Size of the linear system.
+     * @param maxSize Maximum size of the linear system.
      */
-    LinearEigenlibPartialPivLuSolver(unsigned int size);
+    LinearEigenlibPartialPivLuSolver(unsigned int maxSize);
 
     /**
      * @brief Destroy `LinearEigenlibPartialPivLuSolver` object.
