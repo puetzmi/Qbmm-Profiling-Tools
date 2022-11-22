@@ -84,7 +84,7 @@ int main() {
     std::function<double()> sample(std::bind(normal, randomGen));
 
     int nMin = 2;
-    int nMax = 40;
+    int nMax = 32;
 
     double *workMatrix = static_cast<double*>(mkl_malloc(nMax*nMax*sizeof(double), MALLOC_ALIGN));
     double *resultMatrix = static_cast<double*>(mkl_malloc(nMax*nMax*sizeof(double), MALLOC_ALIGN));
@@ -94,7 +94,7 @@ int main() {
     const std::vector<std::string>& allCholeskyDecompositionTypeNames = CholeskyDecompositionFactory::keys();
     for (auto& choleskyDecompositionTypeName : allCholeskyDecompositionTypeNames) {
 
-        for (int n=nMin; n<=nMax; n++) {
+        for (int n=nMin; n<=nMax; n*=2) {
 
             prepareMatrices(n, workMatrix, resultMatrix, spdMatrix, sample);
             auto choleskyDecompPtr = CholeskyDecomposition::makeShared(choleskyDecompositionTypeName, n);
