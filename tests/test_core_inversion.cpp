@@ -28,7 +28,7 @@ int main() {
     int nMin = 2;
     int nMax = 10;
 
-    double relTol = 1e-6;
+    double relTol = 1e-5;
     const int randomSeed = DEFAULT_RANDOM_SEED;
     std::mt19937_64 randomGen;
     randomGen.seed(randomSeed);
