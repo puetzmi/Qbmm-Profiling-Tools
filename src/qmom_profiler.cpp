@@ -86,26 +86,24 @@ int QmomProfiler::computeQuadrature(double *moments, bool resetCpuTime)
 }
 
 
-int QmomProfiler::computeMomentsRateOfChange(int nMoments, const std::function<double(double)> &gFunc,
-    bool resetCpuTime)
+int QmomProfiler::computeMomentsRateOfChange(int nMoments, bool resetCpuTime)
 {
     const std::string cpuTimesKey = "Integrate";
 
-    std::function<int(int, std::function<double(double)>)> callableSubroutine = 
-        std::bind(&Qmom::computeMomentsRateOfChange, qmomPtr_,
-            std::placeholders::_1, std::placeholders::_2);
+    std::function<int(int)> callableSubroutine = std::bind(
+        &Qmom::computeMomentsRateOfChange, qmomPtr_, std::placeholders::_1);
 
     if (resetCpuTime)
         cpuTimes_.at(cpuTimesKey) = 0;
 
     cpuTimes_.at(cpuTimesKey) += 
-        qmomSubroutineRuntime<int, std::function<double(double)> >(callableSubroutine, nMoments, gFunc);
+        qmomSubroutineRuntime<int>(callableSubroutine, nMoments);
 
     return 0;
 }
 
 
-int QmomProfiler::compute(double *moments, const std::function<double(double)> &gFunc)
+int QmomProfiler::compute(double *moments)
 {
 
     int info = 0;
@@ -118,7 +116,7 @@ int QmomProfiler::compute(double *moments, const std::function<double(double)> &
     info += computeQuadrature(moments, true);
 
     // Third subroutine: Computation of the moments' rate of change from quadrature and given function
-    info += computeMomentsRateOfChange(nMoments, gFunc, true);
+    info += computeMomentsRateOfChange(nMoments, true);
 
     return info;
 

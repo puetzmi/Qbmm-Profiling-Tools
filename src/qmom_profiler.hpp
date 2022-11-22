@@ -105,10 +105,9 @@ public:
      * @brief Execute all QMOM subroutines or derived algorithms and measure runtimes.
      * 
      * @param moments Realizable moment sequence.
-     * @param gFunc Function g in the integral expression to compute the moments' rate of change, see `Qmom` class description.
      * @return int Error flag.
      */
-    virtual int compute(double *moments, const std::function<double(double)> &gFunc);
+    virtual int compute(double *moments);
 
 
     /**
@@ -132,14 +131,12 @@ public:
 
 
     /**
-     * @brief InterfaceMethod for `Qmom::computeMomentsRateOfChange` with runtime measurement.
+     * @brief Interface method for `Qmom::computeMomentsRateOfChange` with runtime measurement.
      * @param nMoments Number of moments to be computed.
-     * @param gFunc Function representing g in the integral.
      * @param resetCpuTime Indicates if stored CPU times are supposed to be reset (optional, default `true`).
      * @return int Dummy error flag.
      */
-    virtual int computeMomentsRateOfChange(int nMoments, const std::function<double(double)> &gFunc,
-        bool resetCpuTime);
+    virtual int computeMomentsRateOfChange(int nMoments, bool resetCpuTime=true);
 
 };
 
