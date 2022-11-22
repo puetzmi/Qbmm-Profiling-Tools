@@ -11,6 +11,8 @@
 #define QMOM_HPP
 
 #include <mkl.h>
+#include <functional>
+
 #include "global_defs.hpp"
 #include "eigensolve.hpp"
 #include "linsolve.hpp"
@@ -81,6 +83,15 @@ protected:
     std::shared_ptr<const double[]> eigenVecs_; ///< Pointer to eigenvectors in Eigen solver.
     std::shared_ptr<double[]> 
         momentsRateOfChange_;                   ///< Storage for the rate of change of 2N moments; updated in `computeMomentsRateOfChange`.
+    
+    /**
+     * @brief Function or callable object computing the moments' rate of change given
+     * the abscissas, weights and size of the quadrature, number of moments and an array
+     * with allocated memory to store the result (in this order).
+     * 
+     */
+    std::function<int(double * const ,double * const, int, int, 
+        double*)> momentsRateOfChangeFunction_;
 
 
     /**
@@ -138,9 +149,11 @@ public:
      * @param coreInversion Shared pointer to `CoreInversionAlgorithm` object to compute the Jacobi matrix from moments.
      * @param eigenSolver Shared pointer to `EigenSolver` object to compute the eigenvalues (and possibly -vectors) of the tridiagonal Jacobi matrix.
      * @param linearSolver Shared pointer to `LinearSolver` to compute quadrature weights from Vandermonde system, or null pointer if the weights are to be computed from the eigenvectors of the Jacobi matrix.
+     * @param momentsRateOfChangeFunction Function to compute moments' rate of change, see corresponing attribute `Qmom::momantsRateOfChangeFunction_`.
      */
     Qmom(int nMoments, int nNodes, std::shared_ptr<CoreInversionAlgorithm> coreInversion, 
-        std::shared_ptr<RealEigenSolver> eigenSolver, std::shared_ptr<LinearSolver> linearSolver);
+        std::shared_ptr<RealEigenSolver> eigenSolver, std::shared_ptr<LinearSolver> linearSolver,
+        std::function<int(double * const, double * const, int, int, double*)>momentsRateOfChangeFunction);
 
     
     /**
@@ -156,7 +169,7 @@ public:
      * @param m Set of moments.
      * @return int Error flag.
      */
-    virtual int compute(double *moments, const std::function<double(double)> &gFunc);
+    virtual int compute(double *moments);
 
     /**
      * @brief Compute the tridiagonal Jacobi matrix given a moment sequence.
@@ -182,14 +195,13 @@ public:
      * @f\[
      *  \dot{m}_k = \int_{\Omega} \xi^k g(\xi) \mathrm{d} \xi,
      * @f\]
-     * where @f$ g @f$ is given by the parameter `gFunc`. 
+     * where @f$ g @f$ is a problem-dependent function considered in `momentsRateOfChangeFunction`.
      * No moment inversion is performed here, the current quadrature nodes Qmom::xi_ and Qmom::w_ are used for the calculation.
      * The result is stored in Qmom::mDot_. The moment orders @f$ k @f$ range from `begin` to `end - 1`.
      * @param nMoments Number of moments to be computed.
-     * @param gFunc Function representing g in the integral.
      * @return int Dummy error flag.
      */
-    virtual int computeMomentsRateOfChange(int nMoments, const std::function<double(double)> &gFunc);
+    virtual int computeMomentsRateOfChange(int nMoments);
 
     /**
      * @brief Get shared pointer to quadrature abscissas.
@@ -255,9 +267,11 @@ public:
      * @param coreInversion Shared pointer to `CoreInversionAlgorithm` object to compute the Jacobi matrix from moments.
      * @param eigenSolver Shared pointer to `EigenSolver` object to compute the eigenvalues (and possibly -vectors) of the tridiagonal Jacobi matrix.
      * @param linearSolver Shared pointer to `LinearSolver` to compute quadrature weights from Vandermonde system, or null pointer if the weights are to be computed from the eigenvectors of the Jacobi matrix.
+     * @param momentsRateOfChangeFunction Function to compute moments' rate of change, see corresponing attribute `Qmom::momantsRateOfChangeFunction_`.
      */
     QmomStd(int nMoments, std::shared_ptr<CoreInversionAlgorithm> coreInversion, 
-        std::shared_ptr<RealEigenSolver> eigenSolver, std::shared_ptr<LinearSolver> linearSolver);
+        std::shared_ptr<RealEigenSolver> eigenSolver, std::shared_ptr<LinearSolver> linearSolver,
+        std::function<int(double * const, double * const, int, int, double*)> momentsRateOfChangeFunction);
     
     /**
      * @brief Destroy the `QmomStd` object.
@@ -290,9 +304,11 @@ public:
      * @param coreInversion Shared pointer to `CoreInversionAlgorithm` object to compute the Jacobi matrix from moments.
      * @param eigenSolver Shared pointer to `EigenSolver` object to compute the eigenvalues (and possibly -vectors) of the tridiagonal Jacobi matrix.
      * @param linearSolver Shared pointer to `LinearSolver` to compute quadrature weights from Vandermonde system, or null pointer if the weights are to be computed from the eigenvectors of the Jacobi matrix.
+     * @param momentsRateOfChangeFunction Function to compute moments' rate of change, see corresponing attribute `Qmom::momantsRateOfChangeFunction_`.
      */
     QmomGaG(int nMoments, std::shared_ptr<CoreInversionAlgorithm> coreInversion, 
-        std::shared_ptr<RealEigenSolver> eigenSolver, std::shared_ptr<LinearSolver> linearSolver);
+        std::shared_ptr<RealEigenSolver> eigenSolver, std::shared_ptr<LinearSolver> linearSolver,
+        std::function<int(double * const, double * const, int, int, double*)> momentsRateOfChangeFunction);
 
     /**
      * @brief Destroy the `QmomGaG` object.

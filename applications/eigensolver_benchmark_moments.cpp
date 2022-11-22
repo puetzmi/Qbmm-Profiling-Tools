@@ -26,6 +26,14 @@
 #include "qmom.hpp"
 
 
+// Dummy rate-of-change function that simply reconstructs the moments
+int computeMomentsRateOfChange(double * const nodes, double * const weights, 
+    int nNodes, int nMoments, double *momentsRateOfChange)
+{
+    computeMomentsFromQuadrature(nodes, weights, nNodes, nMoments, momentsRateOfChange);
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
 
@@ -173,7 +181,7 @@ int main(int argc, char *argv[])
         const std::string &linearSolverType = configuration.at(linearSolverKey);
         std::shared_ptr<LinearSolver> linearSolver =
             LinearSolver::makeShared(linearSolverType, jacobiMatrixSize);
-        QmomStd qmom(nMoments, nullptr, eigenSolver, linearSolver);
+        QmomStd qmom(nMoments, nullptr, eigenSolver, linearSolver, computeMomentsRateOfChange);
 
         // Loop over all moment sequences
         for (int i = 0; i < nMomentSets; i++)
@@ -211,7 +219,7 @@ int main(int argc, char *argv[])
             outputQuantities.at("RelativeSeparationCoefficient") = minDistance/maxDistance;
 
             // Compute moment errors
-            qmom.computeMomentsRateOfChange(nMoments, [](double){return 1;});
+            qmom.computeMomentsRateOfChange(nMoments);
             auto reconstructedMoments = qmom.momentsRateOfChange();
             for (int j=0; j<nMoments; j++) {
                 momentsError[j] = std::abs((reconstructedMoments[j] - mom[j])/mom[j]);

@@ -10,16 +10,18 @@
  */
 
 #include "qmom.hpp"
-#include "core_inversion.hpp"
 #include <cmath>
 #include <mkl.h>
-#include "constants.hpp"
 #include <stdexcept>
 #include <functional>
 
+#include "constants.hpp"
+#include "core_inversion.hpp"
+
 
 Qmom::Qmom(int nMoments, int nNodes, std::shared_ptr<CoreInversionAlgorithm> coreInversion,
-            std::shared_ptr<RealEigenSolver> eigenSolver, std::shared_ptr<LinearSolver> linearSolver)
+    std::shared_ptr<RealEigenSolver> eigenSolver, std::shared_ptr<LinearSolver> linearSolver,
+    std::function<int(double*, double*, int, int, double*)> momentsRateOfChangeFunction)
     :
     nMoments_ (nMoments),
     N_ (nMoments/2),
@@ -35,7 +37,8 @@ Qmom::Qmom(int nMoments, int nNodes, std::shared_ptr<CoreInversionAlgorithm> cor
     alpha_ (static_cast<double*>(mkl_malloc(N_*sizeof(double), MALLOC_ALIGN))),
     gamma_ (static_cast<double*>(mkl_malloc((N_-1)*sizeof(double), MALLOC_ALIGN))),
     eigenVecs_ (eigenSolver_->eigenVectors()),
-    momentsRateOfChange_(static_cast<double*>(mkl_malloc(2*N_*sizeof(double), MALLOC_ALIGN)), &mkl_free)
+    momentsRateOfChange_(static_cast<double*>(mkl_malloc(2*N_*sizeof(double), MALLOC_ALIGN)), &mkl_free),
+    momentsRateOfChangeFunction_(momentsRateOfChangeFunction)
 {
 
     // Do not compute eigenvectors if linear solver is provided
@@ -77,21 +80,15 @@ void Qmom::updateVandermondeMatrix(int end, int begin) {
 }
 
 
-int Qmom::computeMomentsRateOfChange(int nMoments, const std::function<double(double)> &xiDot) {
+int Qmom::computeMomentsRateOfChange(int nMoments) {
 
     for (int k=0; k<nMoments; k++) {
         momentsRateOfChange_[k] = 0.;
     }
 
-    for (int j=0; j<nNodes_; j++) {
-        double prod = quadratureWeights_[j] * xiDot(quadratureNodes_[j]);
-        for (int k=0; k<nMoments; k++) {
-            momentsRateOfChange_[k] += prod;
-            prod *= quadratureNodes_[j];
-        }
-    }
+    return momentsRateOfChangeFunction_(quadratureNodes_.get(), quadratureWeights_.get(), nNodes_,
+        nMoments_, momentsRateOfChange_.get());
 
-    return 0;
 }
 
 int Qmom::computeJacobiMatrix(double *moments)
@@ -100,7 +97,7 @@ int Qmom::computeJacobiMatrix(double *moments)
 }
 
 
-int Qmom::compute(double *moments, const std::function<double(double)> &gFunc) {
+int Qmom::compute(double *moments) {
 
     // Single-node case
     if (N_ == 1) {
@@ -113,7 +110,7 @@ int Qmom::compute(double *moments, const std::function<double(double)> &gFunc) {
 
     info += this->computeQuadrature(moments);
 
-    info += this->computeMomentsRateOfChange(nMoments_, gFunc);
+    info += this->computeMomentsRateOfChange(nMoments_);
 
     return info;
 }
@@ -146,9 +143,11 @@ void Qmom::setJacobiMatrix(double *mainDiagonal, double *firstDiagonal)
 }
 
 QmomStd::QmomStd(int nMoments, std::shared_ptr<CoreInversionAlgorithm> coreInversion, 
-    std::shared_ptr<RealEigenSolver> eigenSolver, std::shared_ptr<LinearSolver> linearSolver)
+    std::shared_ptr<RealEigenSolver> eigenSolver, std::shared_ptr<LinearSolver> linearSolver,
+    std::function<int(double*, double*, int, int, double*)> momentsRateOfChangeFunction)
     :
-    Qmom(nMoments, numberOfNodes(nMoments), coreInversion, eigenSolver, linearSolver)
+    Qmom(nMoments, numberOfNodes(nMoments), coreInversion, eigenSolver, linearSolver,
+        momentsRateOfChangeFunction)
 {
 
     if (nMoments_ % 2 != 0) {
@@ -200,9 +199,11 @@ int QmomStd::computeQuadrature(double *moments)
 
 
 QmomGaG::QmomGaG(int nMoments, std::shared_ptr<CoreInversionAlgorithm> coreInversion, 
-    std::shared_ptr<RealEigenSolver> eigenSolver, std::shared_ptr<LinearSolver> linearSolver)
+    std::shared_ptr<RealEigenSolver> eigenSolver, std::shared_ptr<LinearSolver> linearSolver,
+    std::function<int(double*, double*, int, int, double*)> momentsRateOfChangeFunction)
     :
-    Qmom(nMoments, numberOfNodes(nMoments), coreInversion, eigenSolver, linearSolver),
+    Qmom(nMoments, numberOfNodes(nMoments), coreInversion, eigenSolver, linearSolver, 
+        momentsRateOfChangeFunction),
     work_(static_cast<double*>(mkl_malloc(N_*sizeof(double), MALLOC_ALIGN)))
 {
 

@@ -11,6 +11,7 @@
 #include <mkl.h>
 #include <vector>
 #include <random>
+
 #include "global_defs.hpp"
 #include "moment_utils.hpp"
 #include "qmom.hpp"
@@ -24,8 +25,12 @@
 #include <cassert>
 
 
-double gFunc(double) {
-    return 1.;
+// Dummy rate-of-change function that simply reconstructs the moments
+int computeMomentsRateOfChange(double * const nodes, double * const weights, 
+    int nNodes, int nMoments, double *momentsRateOfChange)
+{
+    computeMomentsFromQuadrature(nodes, weights, nNodes, nMoments, momentsRateOfChange);
+    return 0;
 }
 
 int main ()
@@ -84,14 +89,22 @@ int main ()
                     auto eigenSolverPtr = RealEigenSolver::makeShared(eigenSolverType, nMom/2, problemType);
                     auto linearSolverPtr = LinearSolver::makeShared(linearSolverType, nMom/2);
 
-                    QmomStd qmomObj(nMom, coreInversionPtr, eigenSolverPtr, linearSolverPtr);
-                    qmomObj.compute(moments, gFunc);
-                    qmomObj.computeMoments(0, nMom, momentsReconst);
+                    QmomStd qmomObj(nMom, coreInversionPtr, eigenSolverPtr, linearSolverPtr, 
+                        computeMomentsRateOfChange);
+                    qmomObj.compute(moments);
+                    //qmomObj.computeMoments(0, nMom, momentsReconst);
+                    qmomObj.computeMomentsRateOfChange(nMom);
 
                     // Check if the resulting moments reconstructed from the computed quadrature
                     // are approximately equal to the given moments
                     for (int k=0; k<nMom; k++) {
+
                         double relError = std::fabs((moments[k] - momentsReconst[k])/moments[k]);
+                        //assert(relError < relTol);
+
+                        // With the rate-of-change function as defined above, the `momentsRateOfChange`
+                        // variable should also equal the original moments
+                        relError = std::fabs((moments[k] - qmomObj.momentsRateOfChange()[k])/moments[k]);
                         assert(relError < relTol);
                     }
                 }
