@@ -25,7 +25,6 @@ Qmom::Qmom(int nMoments, int nNodes, std::shared_ptr<CoreInversionAlgorithm> cor
     :
     nMoments_ (nMoments),
     N_ (nMoments/2),
-    twoN_ (2*N_),
     nNodes_ (nNodes),
     coreInversion_ (coreInversion),
     eigenSolver_ (eigenSolver),
@@ -85,22 +84,33 @@ std::unique_ptr<Qmom> Qmom::makeUnique(const std::string &typeName, int nMoments
 }
 
 
-void Qmom::updateVandermondeMatrix(int end, int begin) {
+void Qmom::updateVandermondeMatrix(int end, int begin, double *nodes)
+{
+
+    if (!nodes)
+        nodes = quadratureNodes_.get();
+
+    if (begin == 0) {
+        begin++;
+        for (int i=0; i<N_; i++)
+        vandermondeMatrix_[i] = 1.;
+    }
 
     double *Vim1;                   // (i-1)th row
-    double *Vi = &(vandermondeMatrix_[begin-1]);    // ith row
+    double *Vi = vandermondeMatrix_ + begin - 1; // &(vandermondeMatrix_[begin-1]);    // ith row
 
     for (int i=begin; i<end; i++) {
         Vim1 = Vi;
         Vi = &(vandermondeMatrix_[i*N_]);
         for (int j=0; j<N_; j++) {
-            Vi[j] = Vim1[j]*quadratureNodes_[j];
+            Vi[j] = Vim1[j]*nodes[j];
         }
     }
 }
 
 
-int Qmom::computeMomentsRateOfChange(int nMoments) {
+int Qmom::computeMomentsRateOfChange(int nMoments)
+{
 
     for (int k=0; k<nMoments; k++) {
         momentsRateOfChange_[k] = 0.;
@@ -117,7 +127,8 @@ int Qmom::computeJacobiMatrix(double *moments)
 }
 
 
-int Qmom::compute(double *moments) {
+int Qmom::compute(double *moments)
+{
 
     // Single-node case
     if (N_ == 1) {
@@ -137,7 +148,7 @@ int Qmom::compute(double *moments) {
 
 int Qmom::computeMoments(int kmin, int kmax, double *mom) {
 
-    for (int k=0; k<twoN_; k++) {
+    for (int k=0; k<2*N_; k++) {
         mom[k] = 0.;
     }
 
@@ -180,7 +191,8 @@ QmomStd::QmomStd(int nMoments, std::shared_ptr<CoreInversionAlgorithm> coreInver
 QmomStd::~QmomStd(){}
 
 
-int QmomStd::numberOfNodes(int nMoments) const {
+int QmomStd::numberOfNodes(int nMoments) const
+{
     return nMoments/2;
 }
 
@@ -235,13 +247,14 @@ QmomGaG::QmomGaG(int nMoments, std::shared_ptr<CoreInversionAlgorithm> coreInver
 }
 
 
-QmomGaG::~QmomGaG() {
-
+QmomGaG::~QmomGaG()
+{
     mkl_free(work_);
 }
 
 
-int QmomGaG::numberOfNodes(int nMoments) const {
+int QmomGaG::numberOfNodes(int nMoments) const
+{
     return nMoments - 1;
 }
 
@@ -256,22 +269,25 @@ int QmomGaG::computeQuadrature(double *moments)
 
     // Compute Gaussian quadrature in the first iteration and then the
     // anti-Gaussian quadrature using the modified Jacobi matrix
+    N_ -= 2;
     for (int i=1; i>-1; i--) {
 
+        N_++;
+
         // Set size of eigenvalue problem
-        eigenSolver_->setSize(N_ - i);
+        eigenSolver_->setSize(N_);
 
         // Jacobi matrix -> quadrature
         info += eigenSolver_->compute(alpha_, gamma_);
 
         // The quadrature nodes equal the eigenvalues
-        for (int j=0; j<N_-i; j++) {
+        for (int j=0; j<N_; j++) {
             quadratureNodes_[2*j + i] = eigenSolver_->eigenValues()[j];
         }
 
         // Determine weights from eigenvectors if selected
         if (computeWeightsFromEigenVectors_) {
-            for (int j=0; j<N_-i; j++) {
+            for (int j=0; j<N_; j++) {
                 quadratureWeights_[2*j + i] = eigenVecs_[j]*eigenVecs_[j];
             }
         }
@@ -279,15 +295,23 @@ int QmomGaG::computeQuadrature(double *moments)
         // ... or solve Vandermonde system otherwise.
         else {
 
+            linearSolver_->setSize(N_);
+
             // First row of Vandermonde matrix that is not required to solve the linear system
             int end = linearSolver_->endOfElementsNeeded()/N_;
 
-            updateVandermondeMatrix(end);
+            for (int j=0; j<N_; j++) {
+                work_[j] = quadratureNodes_[2*j + i];
+            }
+
+            updateVandermondeMatrix(end, 0, work_);
 
             linearSolver_->solve(vandermondeMatrix_, moments, work_);
 
+            for (int j=0; j<N_; j++) {
+                quadratureWeights_[2*j + i] = work_[j];
+            }
         }
-
     }
 
     // Averaged quadrature

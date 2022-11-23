@@ -70,10 +70,9 @@ class Qmom {
 
 protected:
 
-    const int nMoments_;                        ///< Number of moments.
-    const int N_;                               ///< N as defined above.
-    const int twoN_;                            ///< 2N.
-    const int nNodes_;                          ///< Number of quadrature nodes (depends on specific QMOM type).
+    int nMoments_;                              ///< Number of moments.
+    int N_;                                     ///< N as defined above.
+    int nNodes_;                                ///< Number of quadrature nodes (depends on specific QMOM type).
 
     const std::shared_ptr<CoreInversionAlgorithm> 
         coreInversion_;                         ///< Core inversion algorithm to compute the Jacobi matrix from moments.
@@ -133,8 +132,9 @@ protected:
      * 
      * @param end The row after the last to be updated, i.e. rows up to end-1 are updated.
      * @param begin First row to be updated, must satisfy `1 <= begin`, by default `begin=1` since the zeroth row contains only ones.
+     * @param nodes Nodes to update Vandermonde matrix, set to the currently stored `quadratureNodes` is not given.
      */
-    void updateVandermondeMatrix(int end, int begin=1);
+    void updateVandermondeMatrix(int end, int begin=1, double *nodes=nullptr);
 
 
 public:
