@@ -181,6 +181,10 @@ if (WITH_TESTING)
     target_link_libraries(test_qmom Qbmm LinAlg $<LINK_ONLY:MKL::MKL>)
     add_test(NAME test_qmom COMMAND test_qmom)
 
+    add_executable(test_physical_models tests/test_physical_models.cpp)
+    target_link_libraries(test_physical_models PhysicalModels Qbmm LinAlg $<LINK_ONLY:MKL::MKL>)
+    add_test(NAME test_physical_models COMMAND test_physical_models)
+
     # Enable test for memory leaks
     include(CTest)
     add_custom_target(test_memcheck
