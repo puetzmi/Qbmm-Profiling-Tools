@@ -95,7 +95,7 @@ If a supported version of Doxygen is installed and *BUILD_DOC* is enabled, an ad
 #### Testing
 
 Provided that the required packages are installed, simple test applications can be run with the command
-```bash
+```
 > make test
 ```
 A complete check for memory leaks/errors is carried out by
@@ -105,7 +105,11 @@ A complete check for memory leaks/errors is carried out by
 
 #### Data generation
 
-Python scripts to generate input data for QMOM performance profiling are located in `scripts` in the source directory. For more information on the usage, see the comments in the Python files and the Doxygen documentation.
+Python scripts to generate input data for QMOM performance profiling are located in `python_tools` in the source directory. The QuadMomPy package is required for that. It can be installed by
+```
+> pip install quadmompy
+```
+For more information on the usage, see the comments in the Python files and the Doxygen documentation.
 
 
 #### License
