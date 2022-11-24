@@ -89,25 +89,28 @@ public:
 
 
     /**
-     * @brief Compute the moments' rate of change given a single node value and the
-     *  number of moments and adds the result to given array.
+     * @brief Compute the rate of change of a specified number of moments given a set of abscissas
+     *  and weights
      * 
-     * @param [in] nodeValue Internal coordinate value at single node.
-     * @param [in] nMoments Number of moments.
-     * @param [out] momentsRateOfChange Moments' rate of change with the computed results added.
-     * @return int Dummy error flag.
+     * @param abscissas Array of abscissas.
+     * @param weights Array of weights corresponding to abscissas.
+     * @param nNodes Total number of nodes.
+     * @param nMoments Total number of moments.
+     * @param momentsRateOfChange Allocated memory for `nMoments` doubles to store the results, which are added to the existing values.
+     * @return int Error flag.
      */
-    virtual int computeMomentsRateOfChange(double nodeValue, int nMoments,
-        double *momentsRateOfChange) const = 0;
+    virtual int computeMomentsRateOfChange(double * const abscissas, double * const weights, int nNodes,
+        int nMoments, double *momentsRateOfChange) const = 0;
 
 
     /**
      * @brief Alternative way to call `computeMomentsRateOfChange`.
      * 
      */
-    int operator()(double v, int nMoments, double *momentsRateOfChange) const
+    int operator()(double * const abscissas, double * const weights, int nNodes,
+        int nMoments, double *momentsRateOfChange) const
     {
-        return this->computeMomentsRateOfChange(v, nMoments, momentsRateOfChange);
+        return this->computeMomentsRateOfChange(abscissas, weights, nNodes, nMoments, momentsRateOfChange);
     }
 
 };
@@ -157,18 +160,18 @@ public:
     virtual ~FokkerPlanckEquation();
 
 
-    virtual int computeMomentsRateOfChange(double v, int nMoments, 
-        double *momentsRateOfChange) const;
+    virtual int computeMomentsRateOfChange(double * const abscissas, double * const weights, int nNodes,
+        int nMoments, double *momentsRateOfChange) const;
 
 
 private:
 
     double gamma_;              ///< Constant in advection term
     double phi_;                ///< Constant in diffusion term
-    double phiSquared_;         ///< Squared constant in diffusion term
 
     static bool inline registered_ = REGISTER_TYPE(PhysicalModelFactory, FokkerPlanckEquation);
 
 };
+
 
 #endif // PHYSICAL_MODELS_H

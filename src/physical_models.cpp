@@ -9,14 +9,14 @@
  */
 
 
-#include "physical_models.hpp"
 #include <stdexcept>
+#include "physical_models.hpp"
 
 
 // Sign function for convenience
 template<class T=double>
-inline int signFunction(T x) {
-    return static_cast<int>((x > 0) - (x < 0));
+inline int signFunction(T x, double tol=1e-15) {
+    return static_cast<int>((x - tol > 0) - (x + tol < 0));
 }
 
 PhysicalModel::PhysicalModel()
@@ -32,8 +32,7 @@ FokkerPlanckEquation::FokkerPlanckEquation(double gamma, double phi)
     :
     PhysicalModel(),
     gamma_(gamma),
-    phi_(phi),
-    phiSquared_(phi*phi)
+    phi_(phi)
 {
 
     auto errorMessage = [](const std::string&& s){
@@ -64,30 +63,33 @@ FokkerPlanckEquation::~FokkerPlanckEquation()
 }
     
 
-int FokkerPlanckEquation::computeMomentsRateOfChange(double nodeValue, int nMoments, 
+int FokkerPlanckEquation::computeMomentsRateOfChange(double * const abscissas,
+    double * const weights, int nNodes, int nMoments,
     double *momentsRateOfChange) const
 {
+        for (int j=0; j<nNodes; j++) {
 
-        // Sign of internal coordinate value at node
-        int sign = signFunction(nodeValue);
+            double abscissa = abscissas[j];
 
-        // No change if value is 'numerically zero'
-        if (sign*nodeValue < std::numeric_limits<double>::epsilon()) {
-            return 0;
-        }
+            // Sign of internal coordinate value at node
+            int sign = signFunction(abscissa);
+            if (sign == 0) {
+                continue;       // no addition to moment source term for this node
+            }
 
-        // advection terms
-        double dmdt = -gamma_*sign*nodeValue + 0.25*phiSquared_*sign;
-        for (int k=1; k<nMoments; k++) {
-            momentsRateOfChange[k] += k*dmdt;
-            dmdt *= nodeValue;
-        }
+            // advection terms
+            double dmdt = weights[j] * (-gamma_*sign*abscissa*abscissa + 0.25*phi_*phi_*sign);
+            for (int k=1; k<nMoments; k++) {
+                momentsRateOfChange[k] += k*dmdt;
+                dmdt *= abscissa;
+            }
 
-        // diffusion term
-        dmdt = 0.5*phiSquared_*sign*nodeValue;
-        for (int k=2; k<nMoments; k++) {
-            momentsRateOfChange[k] += k*(k-1)*dmdt;
-            dmdt *= nodeValue;
+            // diffusion term
+            dmdt = weights[j] * (0.5*phi_*phi_*sign*abscissa);
+            for (int k=2; k<nMoments; k++) {
+                momentsRateOfChange[k] += k*(k-1)*dmdt;
+                dmdt *= abscissa;
+            }
         }
 
         return 0;
