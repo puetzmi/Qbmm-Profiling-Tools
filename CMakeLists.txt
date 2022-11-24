@@ -53,13 +53,15 @@ if (NOT GDB_DEBUG_LEVEL OR NOT CMAKE_BUILD_TYPE MATCHES "Debug")
 endif()
 if (CMAKE_BUILD_TYPE MATCHES "Debug")
     set_property(CACHE GDB_DEBUG_LEVEL PROPERTY STRINGS "0" "1" "2" "3")
+
+    # Turn off optimization explicitly to make the Intel compiler happy
+    add_compile_options("-O0")
+    add_link_options("-O0")
 else()
     set_property(CACHE GDB_DEBUG_LEVEL PROPERTY STRINGS "0")
 endif()
 if (NOT GDB_DEBUG_LEVEL MATCHES "0")
-    #set(CMAKE_CXX_FLAGS_DEBUG "-ggdb${GDB_DEBUG_LEVEL}")
     add_compile_options("-ggdb${GDB_DEBUG_LEVEL}")
-    #set(CMAKE_C_FLAGS_DEBUG "-ggdb${GDB_DEBUG_LEVEL}")
 endif()
 
 #message(STATUS "${CMAKE_CXX_COMPILER}-${CMAKE_CXX_COMPILER_VERSION}")
