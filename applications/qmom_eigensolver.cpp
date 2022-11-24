@@ -1,5 +1,5 @@
 /**
- * @file eigensolver_benchmark_moments.cpp
+ * @file qmom_eigensolver.cpp
  * @author M. Puetz
  * @brief This application compares different algorithms to compute the eigenvalues of the Jacobi matrix resulting from random moments (given in input files) in terms of performance and accuracy.
  * @date 2022-11-08
@@ -37,14 +37,14 @@ int computeMomentsRateOfChange(double * const nodes, double * const weights,
 int main(int argc, char *argv[])
 {
 
-    const std::string appName = "eigensolver_benchmark_moments";
+    const std::string appName = "qmom_eigensolver";
 
     [[maybe_unused]] double doubleEpsilon = 
         std::numeric_limits<double>::epsilon();
 
     // Read command line parameters
     int nMoments = parseArgument<int>(argc, argv, "n_moms");
-    std::printf("Running eigensolver_benchmark_moments with %d moments. (%s)\n", nMoments, getTimestamp().c_str());
+    std::printf("Running `%s` with %d moments. (%s)\n", appName.data(), nMoments, getTimestamp().c_str());
     std::fflush(stdout);
 
     int nExecutions = parseArgument<int>(argc, argv, "n_exec");

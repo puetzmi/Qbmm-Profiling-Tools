@@ -1,5 +1,5 @@
 /**
- * @file linsolver_benchmark.cpp
+ * @file qmom_linsolver.cpp
  * @author M. Puetz
  * @brief This application compares different linear solvers to compute the weights corresponding to a set of moments from the Vandermonde matrix of quadrature nodes.
  * @date 2022-11-05
@@ -26,14 +26,14 @@
 int main(int argc, char *argv[])
 {
 
-    const std::string appName = "linsolver_benchmark";
+    const std::string appName = "qmom_linsolver";
 
     [[maybe_unused]] double doubleEpsilon = 
         std::numeric_limits<double>::epsilon();
 
     // Read command line parameters
     int nMoments = parseArgument<int>(argc, argv, "n_moms");
-    std::printf("Running linsolver_benchmark with %d moments. (%s)\n", nMoments, getTimestamp().c_str());
+    std::printf("Running `%s` with %d moments. (%s)\n", appName.data(), nMoments, getTimestamp().c_str());
     std::fflush(stdout);
 
     int nExecutions = parseArgument<int>(argc, argv, "n_exec");

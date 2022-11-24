@@ -1,5 +1,5 @@
 /**
- * @file core_inversion_benchmark.cpp
+ * @file qmom_core_inversion.cpp
  * @author M. Puetz
  * @brief This application compares different algorithms for the computation of the Jacobi matrix from moments in terms of performance and accuracy.
  * @date 2022-10-26
@@ -29,11 +29,11 @@ int main(int argc, char *argv[])
     [[maybe_unused]] double doubleEpsilon = 
         std::numeric_limits<double>::epsilon();
 
-    const std::string appName = "core_inversion_benchmark";
+    const std::string appName = "qmom_core_inversion";
 
     // Read command line parameters
     int nMoments = parseArgument<int>(argc, argv, "n_moms");
-    std::printf("Running core_inversion_benchmark with %d moments. (%s)\n", nMoments, getTimestamp().c_str());
+    std::printf("Running `%s` with %d moments. (%s)\n", appName.data(), nMoments, getTimestamp().c_str());
     std::fflush(stdout);
 
     int nExecutions = parseArgument<int>(argc, argv, "n_exec");

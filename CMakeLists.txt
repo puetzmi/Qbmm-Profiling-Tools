@@ -133,17 +133,17 @@ add_library(QbmmProfiling SHARED src/qmom_profiler.cpp)
 add_library(PhysicalModels SHARED src/physical_models.cpp)
 
 # Build and link executables
-add_executable(core_inversion_benchmark applications/core_inversion_benchmark.cpp)
-target_link_libraries(core_inversion_benchmark Qbmm LinAlg $<LINK_ONLY:MKL::MKL>)
+add_executable(qmom_core_inversion applications/qmom_core_inversion.cpp)
+target_link_libraries(qmom_core_inversion Qbmm LinAlg $<LINK_ONLY:MKL::MKL>)
 
-add_executable(eigensolver_benchmark_general applications/eigensolver_benchmark_general.cpp)
-target_link_libraries(eigensolver_benchmark_general LinAlg $<LINK_ONLY:MKL::MKL>)
+add_executable(general_eigensolver_benchmark applications/general_eigensolver_benchmark.cpp)
+target_link_libraries(general_eigensolver_benchmark LinAlg $<LINK_ONLY:MKL::MKL>)
 
-add_executable(linsolver_benchmark applications/linsolver_benchmark.cpp)
-target_link_libraries(linsolver_benchmark LinAlg $<LINK_ONLY:MKL::MKL>)
+add_executable(qmom_linsolver applications/qmom_linsolver.cpp)
+target_link_libraries(qmom_linsolver LinAlg $<LINK_ONLY:MKL::MKL>)
 
-add_executable(eigensolver_benchmark_moments applications/eigensolver_benchmark_moments.cpp)
-target_link_libraries(eigensolver_benchmark_moments Qbmm LinAlg $<LINK_ONLY:MKL::MKL>)
+add_executable(qmom_eigensolver applications/qmom_eigensolver.cpp)
+target_link_libraries(qmom_eigensolver Qbmm LinAlg $<LINK_ONLY:MKL::MKL>)
 
 #############################################################################
 #############################################################################

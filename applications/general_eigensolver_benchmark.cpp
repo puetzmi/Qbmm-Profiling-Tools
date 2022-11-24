@@ -1,7 +1,7 @@
 /**
- * @file eigensolver_benchmark_general.cpp
+ * @file general_eigensolver_benchmark.cpp
  * @author M. Puetz
- * @brief This application compares the performance and accuracy of different eigen solvers for different tridiagonal Jacobi matrices.
+ * @brief This application compares the general performance and accuracy of different eigen solvers for different random tridiagonal Jacobi matrices.
  * @date 2022-10-10
  * 
  * @copyright Copyright (c) 2022
@@ -19,11 +19,11 @@
 
 int main (int argc, char *argv[]) {
 
-    const std::string appName = "eigensolver_benchmark_general";
+    const std::string appName = "general_eigensolver_benchmark_general";
 
     // Default parameters
     int defaultRandomSeed = DEFAULT_RANDOM_SEED;
-    std::string defaultOutputFilename = "eigensolver_benchmark.out";
+    std::string defaultOutputFilename = appName + ".out";
 
 
     // Read parameters from command line arguments
