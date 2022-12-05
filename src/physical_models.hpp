@@ -23,9 +23,27 @@
 namespace defaultModelConstants {
 
     // Constants in advection and diffusion terms
-    double phi = 16;
-    double gamma = 330;
+    constexpr double phi = 16;
+    constexpr double gamma = 330;
 
+    // Constants in the computation of Reynolds-dependent
+    // drag coefficient: 
+    // Cd = 24/Re*(1 + preReynoldsFactor*Re^reynoldsExponent) 
+    //      + dragConstant
+    constexpr double dragPreReynoldsFactor = 1/6;
+    constexpr double dragReynoldsExponent = 2/3;
+    constexpr double dragConstant = 0;
+
+    // Modified constants for velocity-dependent-drag FPE
+    // using the constants that `gamma` and `phi` are
+    // based on [Puetz2022]
+    constexpr double fluidDensity = 1.;
+    constexpr double turbulentKineticEnergy = 1.;
+    constexpr double particleDiameter = 1e-5;
+
+    // Further constants needed for the calculation of drag coefficient
+    constexpr double particleDensity = 100*fluidDensity;
+    constexpr double dynamicViscosity = 2e-5;
 }
 
 class PhysicalModel;         // forward declaration
@@ -118,7 +136,7 @@ public:
 
 /**
  * @brief Class to compute moment source terms based on the one dimensional Fokker-Planck equation
- * as described in @cite Puetz2022. 
+ * using a constant drag coefficient as described in @cite Puetz2022. 
  * 
  * The moments' rate of change is computed from the quadrature rule
  * @f\[
@@ -134,30 +152,30 @@ public:
  * 
  * 
  */
-class FokkerPlanckEquation : public PhysicalModel 
+class FokkerPlanckConstantCd : public PhysicalModel 
 {
 
 public:
 
     /**
-     * @brief Construct a new `FokkerPlanckEquation` object.
+     * @brief Construct a new `FokkerPlanckConstantCd` object.
      * 
      */
-    FokkerPlanckEquation();
+    FokkerPlanckConstantCd();
 
     /**
-     * @brief Construct a new `FokkerPlanckEquation` object.
+     * @brief Construct a new `FokkerPlanckConstantCd` object.
      * 
-     * @param gamma Constant in the advection terms (see `FokkerPlanckEquation` class description).
-     * @param phi Constant in the diffusion terms (see `FokkerPlanckEquation` class description).
+     * @param gamma Constant in the advection terms (see `FokkerPlanckConstantCd` class description).
+     * @param phi Constant in the diffusion terms (see `FokkerPlanckConstantCd` class description).
      */
-    FokkerPlanckEquation(double gamma, double phi);
+    FokkerPlanckConstantCd(double gamma, double phi);
 
     /**
-     * @brief Destroy the `FokkerPlanckEquation` object.
+     * @brief Destroy the `FokkerPlanckConstantCd` object.
      * 
      */
-    virtual ~FokkerPlanckEquation();
+    virtual ~FokkerPlanckConstantCd();
 
 
     virtual int computeMomentsRateOfChange(double * const abscissas, double * const weights, int nNodes,
@@ -169,9 +187,100 @@ private:
     double gamma_;              ///< Constant in advection term
     double phi_;                ///< Constant in diffusion term
 
-    static bool inline registered_ = REGISTER_TYPE(PhysicalModelFactory, FokkerPlanckEquation);
+    static bool inline registered_ = REGISTER_TYPE(PhysicalModelFactory, FokkerPlanckConstantCd);
 
 };
 
+
+/**
+ * @brief Class to compute moment source terms based on the one dimensional
+ * Fokker-Planck equation as described in @cite Puetz2022, extended by a
+ * Reynolds-number/velocity-dependent drag coefficient.
+ *
+ * The moments' rate of change is computed from the quadrature rule
+ * @f\[ \frac{\mathrm{d}m_k}{\mathrm{d} t} \approx \sum\limits_{j=0} w_j \xi_j^k
+ *  g(\xi_j), \quad k=0,1,\dots,M-1
+ * @f\] where
+ * @f\[ \xi^k g(\xi) = k \text{sgn}(\xi) \left[ -\gamma \xi^{k+1} +
+ *  \frac{\phi^2}{4} \xi^{k-1} + (k-1) \frac{\phi^2}{2} \xi^{k-1} \right],
+ * @f\] see @cite Puetz2022, Eq. (34).
+ *
+ *
+ */
+class FokkerPlanckVelocityDependentCd : public PhysicalModel 
+{
+
+public:
+
+    /**
+     * @brief Construct a new `FokkerPlanckVelocityDependentCd` object.
+     * 
+     */
+    FokkerPlanckVelocityDependentCd();
+
+    /**
+     * @brief Construct a new `FokkerPlanckVelocityDependentCd` object.
+     * 
+     * @param dragPreReynoldsFactor Pre-factor in Reynolds-number-dependent drag coefficient formula.
+     * @param dragReynoldsExponent Exponent in Reynolds-number-dependent drag coefficient formula.
+     * @param dragConstant Constant in Reynolds-number-dependent drag coefficient formula.
+     * @param fluidDensity Density of the carrier fluid.
+     * @param particleDensity Uniform particle density.
+     * @param turbulentKineticEnergy Constant turbulent kinetic energy.
+     * @param dynamicViscosity Dynamic viscosity of the carrier fluid.
+     * @param particleDiameter Uniform particle diameter.
+     */
+    FokkerPlanckVelocityDependentCd(
+            double dragPreReynoldsFactor,
+            double dragReynoldsExponent,
+            double dragConstant,
+            double fluidDensity,
+            double particleDensity,
+            double turbulentKineticEnergy,
+            double dynamicViscosity,
+            double particleDiameter
+    );
+
+    /**
+     * @brief Destroy the `FokkerPlanckVelocityDependentCd` object.
+     * 
+     */
+    virtual ~FokkerPlanckVelocityDependentCd();
+
+
+    virtual int computeMomentsRateOfChange(double * const abscissas, double * const weights, int nNodes,
+        int nMoments, double *momentsRateOfChange) const;
+
+
+private:
+
+    double computeDragCoefficient(double velocity) const
+    {
+        double reynoldsNumber = fluidDensity_*particleDiameter_*std::abs(velocity)
+                                / dynamicViscosity_;
+        return 24/reynoldsNumber*
+            (1 + dragPreReynoldsFactor_*std::pow(reynoldsNumber, dragReynoldsExponent_));
+    }
+
+    // Constants in the computation of Reynolds-dependent
+    // drag coefficient: 
+    // Cd = 24/Re*(1 + preReynoldsFactor*Re^reynoldsExponent) 
+    //      + dragConstant
+    const double dragPreReynoldsFactor_;        ///< Pre-factor in Reynolds-number-dependent drag coefficient formula
+    const double dragReynoldsExponent_;        ///< Exponent in Reynolds-number-dependent drag coefficient formula
+    const double dragConstant_;                 ///< Constant in Reynolds-number-dependent drag coefficient formula
+
+    // Additional material constants used for the computation
+    // of the drag coefficient
+    const double fluidDensity_;                 ///< Density of the carrier fluid
+    const double particleDensity_;              ///< Uniform particle density
+    const double turbulentKineticEnergy_;       ///< Constant turbulent kinetic energy
+    const double dynamicViscosity_;             ///< Dynamic viscosity of the carrier fluid
+    const double particleDiameter_;             ///< Uniform particle diameter
+
+
+    static bool inline registered_ = REGISTER_TYPE(PhysicalModelFactory, FokkerPlanckVelocityDependentCd);
+
+};
 
 #endif // PHYSICAL_MODELS_H

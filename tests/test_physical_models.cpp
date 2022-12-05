@@ -88,7 +88,7 @@ void test_fokker_planck_equation()
         nMoments/2,
         EigenProblemType::EigenPairs
     );
-    auto fokkerPlanck = PhysicalModelFactory::makeShared("FokkerPlanckEquation");
+    auto fokkerPlanck = PhysicalModelFactory::makeShared("FokkerPlanckConstantCd");
 
     std::function<int(double * const, double * const, int, int, double*)> 
         momentsRateOfChangeFunction
