@@ -185,30 +185,72 @@ int FokkerPlanckVelocityDependentCd::computeMomentsRateOfChange(double * const a
 {
     for (int j=0; j<nNodes; j++) {
 
-        const double abscissa = abscissas[j];
+        const double velocity = abscissas[j];
 
-        double dragCoefficient = computeDragCoefficient(abscissa);
-        double tauStarI = 0.75*fluidDensity_*dragCoefficient
-            / (particleDensity_*particleDiameter_);
+        int signVelocity = signFunction(velocity);
+        if (signVelocity == 0)
+            continue;
 
-        // advection terms
-        //  TODO:
-        double driftCoefficient = tauStarI*abscissa;
-        double dmdt = weights[j]*driftCoefficient;
+        double absVelocity = signVelocity*velocity;
+
+        double reynoldsNumber = absVelocity*particleDiameter_*fluidDensity_/dynamicViscosity_;
+        double reynoldsFactor = dragPreReynoldsFactor_* std::pow(reynoldsNumber, dragReynoldsExponent_);
+
+        // pre-factor of both advection and diffusion terms
+        double commonPreFactor = 18*dynamicViscosity_
+                                / (particleDiameter_*particleDiameter_*particleDensity_*velocity);
+
+        // contribution from advection terms (drift and spurious drift)
+        double advectionCoefficient = commonPreFactor
+                                    * (-velocity*velocity*(1 + reynoldsFactor)
+                                        + 0.25*reynoldsFactor*dragReynoldsExponent_*turbulentKineticEnergy_);
+        double dmdt = weights[j]*advectionCoefficient;
         for (int k=1; k<nMoments; k++) {
             momentsRateOfChange[k] += k*dmdt;
-            dmdt *= abscissa;
+            dmdt *= velocity;
         }
 
-        // diffusion term
-        //  TODO:
-        double diffusionCoefficient = turbulentKineticEnergy_*tauStarI*abscissa;
+        // contribution from diffusion term
+        double diffusionCoefficient = 0.5*commonPreFactor*velocity*turbulentKineticEnergy_*(1 + reynoldsFactor);
         dmdt = weights[j]*diffusionCoefficient;
         for (int k=2; k<nMoments; k++) {
             momentsRateOfChange[k] += k*(k-1)*dmdt;
-            dmdt *= abscissa;
+            dmdt *= velocity;
         }
     }
 
     return 0;
+}
+
+
+// TODO: Implementation
+HardSphereCollision1D::HardSphereCollision1D()
+    :
+    HardSphereCollision1D
+    (
+        defaultModelConstants::coefficientOfRestitution,
+        nMomentsMax_
+    )
+{
+}
+
+
+// TODO: Implementation
+HardSphereCollision1D::HardSphereCollision1D(double coefficientOfRestitution, int nMomentsMax)
+    :
+    coefficientOfRestitution_(coefficientOfRestitution)
+{
+}
+
+
+// TODO: Implementation
+HardSphereCollision1D::~HardSphereCollision1D()
+{
+}
+
+
+// TODO: Implementation
+int HardSphereCollision1D::computeMomentsRateOfChange(double * const abscissas, double * const weights, 
+    int nNodes, int nMoments, double *momentsRateOfChange) const
+{
 }

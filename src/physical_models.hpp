@@ -44,7 +44,12 @@ namespace defaultModelConstants {
     // Further constants needed for the calculation of drag coefficient
     constexpr double particleDensity = 100*fluidDensity;
     constexpr double dynamicViscosity = 2e-5;
+
+
+    // Constants in collision terms
+    constexpr double coefficientOfRestitution = 0.8;
 }
+
 
 class PhysicalModel;         // forward declaration
 
@@ -197,15 +202,6 @@ private:
  * Fokker-Planck equation as described in @cite Puetz2022, extended by a
  * Reynolds-number/velocity-dependent drag coefficient.
  *
- * The moments' rate of change is computed from the quadrature rule
- * @f\[ \frac{\mathrm{d}m_k}{\mathrm{d} t} \approx \sum\limits_{j=0} w_j \xi_j^k
- *  g(\xi_j), \quad k=0,1,\dots,M-1
- * @f\] where
- * @f\[ \xi^k g(\xi) = k \text{sgn}(\xi) \left[ -\gamma \xi^{k+1} +
- *  \frac{\phi^2}{4} \xi^{k-1} + (k-1) \frac{\phi^2}{2} \xi^{k-1} \right],
- * @f\] see @cite Puetz2022, Eq. (34).
- *
- *
  */
 class FokkerPlanckVelocityDependentCd : public PhysicalModel 
 {
@@ -254,20 +250,12 @@ public:
 
 private:
 
-    double computeDragCoefficient(double velocity) const
-    {
-        double reynoldsNumber = fluidDensity_*particleDiameter_*std::abs(velocity)
-                                / dynamicViscosity_;
-        return 24/reynoldsNumber*
-            (1 + dragPreReynoldsFactor_*std::pow(reynoldsNumber, dragReynoldsExponent_));
-    }
-
     // Constants in the computation of Reynolds-dependent
     // drag coefficient: 
     // Cd = 24/Re*(1 + preReynoldsFactor*Re^reynoldsExponent) 
     //      + dragConstant
     const double dragPreReynoldsFactor_;        ///< Pre-factor in Reynolds-number-dependent drag coefficient formula
-    const double dragReynoldsExponent_;        ///< Exponent in Reynolds-number-dependent drag coefficient formula
+    const double dragReynoldsExponent_;         ///< Exponent in Reynolds-number-dependent drag coefficient formula
     const double dragConstant_;                 ///< Constant in Reynolds-number-dependent drag coefficient formula
 
     // Additional material constants used for the computation
@@ -280,6 +268,51 @@ private:
 
 
     static bool inline registered_ = REGISTER_TYPE(PhysicalModelFactory, FokkerPlanckVelocityDependentCd);
+
+};
+
+
+/**
+ * @brief Hard-sphere collision as described in @cite Fox2010 and @cite Marchisio2013, reduced to one dimension.
+ * 
+ */
+class HardSphereCollision1D : public PhysicalModel
+{
+
+public:
+
+    /**
+     * @brief Construct a new `HardSphereCollision1D` object.
+     * 
+     */
+    HardSphereCollision1D();
+
+    /**
+     * @brief Construct a new `HardSphereCollision1D` object.
+     * 
+     */
+    HardSphereCollision1D(double coefficientOfRestitution, int nMomentsMax);
+
+    /**
+     * @brief Destroy the `HardSphereCollision1D` object.
+     * 
+     */
+    ~HardSphereCollision1D();
+
+
+    virtual int computeMomentsRateOfChange(double * const abscissas, double * const weights, int nNodes,
+        int nMoments, double *momentsRateOfChange) const;
+
+
+private:
+
+    double coefficientOfRestitution_;               ///< Coefficient of restitution (measure of elasticity), must be in [0, 1].
+
+    // TODO: Add precomputed powers of velocity components
+
+    static int inline nMomentsMax_ = 20;            ///< Maximum number of moments.
+
+    static bool inline registered_ = REGISTER_TYPE(PhysicalModelFactory, HardSphereCollision1D);
 
 };
 
