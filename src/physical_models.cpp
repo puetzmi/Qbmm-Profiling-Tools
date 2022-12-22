@@ -9,8 +9,13 @@
  */
 
 
+#include <functional>
+#include <vector>
 #include <stdexcept>
+#include <mkl.h>
+#include "collision_integral_functions.hpp"
 #include "physical_models.hpp"
+#include "constants.hpp"
 
 
 // Sign function for convenience
@@ -223,34 +228,112 @@ int FokkerPlanckVelocityDependentCd::computeMomentsRateOfChange(double * const a
 }
 
 
-// TODO: Implementation
 HardSphereCollision1D::HardSphereCollision1D()
     :
     HardSphereCollision1D
     (
         defaultModelConstants::coefficientOfRestitution,
+        defaultModelConstants::particleDiameter,
         nMomentsMax_
     )
 {
 }
 
 
-// TODO: Implementation
-HardSphereCollision1D::HardSphereCollision1D(double coefficientOfRestitution, int nMomentsMax)
+HardSphereCollision1D::HardSphereCollision1D(double coefficientOfRestitution,
+    double particleDiameter, int nMomentsMax)
     :
-    coefficientOfRestitution_(coefficientOfRestitution)
+    coefficientOfRestitution_(coefficientOfRestitution),
+    particleDiameter_(particleDiameter),
+    I0Functions_(initializeI0Functions(nMomentsMax)),
+    omega_(0.5*(coefficientOfRestitution_ + 1)), // Fox2010, Eq. (28)
+    omegaPower_(static_cast<double*>(mkl_malloc(nMomentsMax*sizeof(double), MALLOC_ALIGN))),
+    g1Power_(static_cast<double*>(mkl_malloc(nMomentsMax*sizeof(double), MALLOC_ALIGN))),
+    gPower_(static_cast<double*>(mkl_malloc(nMomentsMax*sizeof(double), MALLOC_ALIGN))),
+    v1Power_(static_cast<double*>(mkl_malloc(nMomentsMax*sizeof(double), MALLOC_ALIGN)))
 {
+
+    if (particleDiameter_ <= 0)
+        throw std::runtime_error(
+            "The paramter `particleDiameter` must be positive."
+        );
+    
+    if (coefficientOfRestitution < 0 or coefficientOfRestitution_ > 1)
+        throw std::runtime_error(
+            "The paramter `coefficientOfRestitution` must be within [0,1]."
+        );
+
+    omegaPower_[0] = 1;
+    for (int k=1; k<nMomentsMax; k++) {
+        omegaPower_[k] = omegaPower_[k-1]*omega_;
+    }
+
+    g1Power_[0] = 1;
+    gPower_[0] = 1;
+    v1Power_[0] = 1;
 }
 
 
-// TODO: Implementation
 HardSphereCollision1D::~HardSphereCollision1D()
 {
+    mkl_free(omegaPower_);
+    mkl_free(g1Power_);
+    mkl_free(gPower_);
+    mkl_free(v1Power_);
 }
 
 
-// TODO: Implementation
-int HardSphereCollision1D::computeMomentsRateOfChange(double * const abscissas, double * const weights, 
-    int nNodes, int nMoments, double *momentsRateOfChange) const
+int HardSphereCollision1D::computeMomentsRateOfChange
+(
+    double * const abscissas, double * const weights, 
+    int nNodes, int nMoments, double *momentsRateOfChange
+) const
 {
+
+    double m0 = 0;
+    for (int i=0; i< nNodes; i++) {
+        m0 += weights[i];
+    }
+
+    double volumeFraction = m0*constants::pi/6;
+    for (int i=0; i<3; i++) {
+        volumeFraction *= particleDiameter_;
+    }
+
+    // see Marchisio2013, Chapter 6.1
+    double c = std::min<double>(volumeFraction/0.63, 1);
+    double g0 = (2 - c) / (2*(1 - c)*(1 - c)*(1 - c));
+
+    double preFactor = 6*g0/particleDiameter_;
+
+
+    // Fox2010, Eq. (59) without advection and collisional flux term
+    // TODO: Check if limits are OK
+    for (int i=0; i<nNodes; i++) {
+
+        // update powers of velocity
+        v1Power_[1] = abscissas[i];
+        for (int k=2; k<nMoments; k++) {
+            v1Power_[k] = v1Power_[k-1]*v1Power_[1];
+        }
+
+        for (int j=0; j<nNodes; j++) {
+
+            // update powers of relative velocity and its magnitude
+            g1Power_[1] = v1Power_[1] - abscissas[j];
+            gPower_[1] = std::abs(g1Power_[1]);
+            for (int k=2; k<nMoments; k++) {
+                g1Power_[k] = g1Power_[k-1]*g1Power_[1];
+                gPower_[k] = gPower_[k-1]*gPower_[1];
+            }
+
+            // compute moment source terms
+            for (int k=1; k<nMoments; k++) {
+                momentsRateOfChange[k] +=
+                    preFactor*weights[i]*weights[j]*g1Power_[1]*I0Functions_[k]();
+            }
+        }
+    }
+
+    return 0;
 }

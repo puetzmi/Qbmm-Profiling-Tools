@@ -290,8 +290,16 @@ public:
     /**
      * @brief Construct a new `HardSphereCollision1D` object.
      * 
+     * @param coefficientOfRestitution Coefficient of restitiution, see @cite FOx2010.
+     * @param particleDiameter Uniform particle diameter.
+     * @param nMomentsMax Maximum number of moments.
      */
-    HardSphereCollision1D(double coefficientOfRestitution, int nMomentsMax);
+    HardSphereCollision1D
+    (
+        double coefficientOfRestitution,
+        double particleDiameter,
+        int nMomentsMax
+    );
 
     /**
      * @brief Destroy the `HardSphereCollision1D` object.
@@ -306,11 +314,40 @@ public:
 
 private:
 
+    /**
+     * @brief Compute the expression $I^{(0)}_{k,0,0}$ in $k$th order collision
+     * integral, see @cite Fox2010.
+     *
+     * @tparam momentOrder Moment order (one-dimensional).
+     * @return double Value of $I^{(0)}_{k,0,0}$, where $k$ is the given moment
+     * order.
+     */
+    template <int momentOrder>
+    double computeI0();
+
+    /**
+     * @brief Initialize vector of functions to compute the expression
+     * $I_{k,0,0}^(0)$ in the collision integral, see @cite Fox2010.
+     *
+     * @param nMoments Number of moments.
+     * @return std::vector<std::function<double()> > 
+     */
+    std::vector<std::function<double()> >
+        initializeI0Functions(int nMoments);
+
+
     double coefficientOfRestitution_;               ///< Coefficient of restitution (measure of elasticity), must be in [0, 1].
+    double particleDiameter_;                       ///< Uniform particle diameter.
+    std::vector<std::function<double()> > 
+        I0Functions_;                               ///< Functions to compute I0 from particle velocities (see @cite Fox2010).
+    double omega_;                                  ///< Measure of elasticity in I0 functions, see @cite Fox2010.
+    double *omegaPower_;                            ///< Array of powers of `omega_`.
+    double *g1Power_;                               ///< Array of powers of relative velocity (1D -> here only first component).
+    double *gPower_;                                ///< Array of powers of relative velocity magnitude (1D -> equals magnitude of first component).
+    double *v1Power_;                               ///< Array of powers of particle velocity (1D -> here only first component).
 
-    // TODO: Add precomputed powers of velocity components
-
-    static int inline nMomentsMax_ = 20;            ///< Maximum number of moments.
+    
+    static constexpr int nMomentsMax_ = 20;         ///< Maximum allowed number of moments.
 
     static bool inline registered_ = REGISTER_TYPE(PhysicalModelFactory, HardSphereCollision1D);
 
