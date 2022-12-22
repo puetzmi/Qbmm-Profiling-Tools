@@ -23,6 +23,7 @@
 #include "linsolve.hpp"
 #include "qmom.hpp"
 #include "physical_models.hpp"
+#include "moment_utils.hpp"
 
 
 /**
@@ -32,7 +33,7 @@
  * @param nMoments Number of moments.
  * @return std::shared_ptr<double[]> Shared pointer to moments.
  */
-std::shared_ptr<double[]> getReferenceMoments(int nMoments)
+std::shared_ptr<double[]> getFpeReferenceMoments(int nMoments)
 {
 
     double allMoments[20] =
@@ -70,7 +71,7 @@ std::shared_ptr<double[]> getReferenceMoments(int nMoments)
     return moments;
 }
 
-void test_fokker_planck_equation()
+void testFokkerPlanckEquationConstantDrag()
 {
 
     int nMoments = 6;
@@ -103,7 +104,7 @@ void test_fokker_planck_equation()
     auto QmomPtr = Qmom::makeShared("QmomGaG", nMoments, coreInversion,
         eigenSolver, nullptr, momentsRateOfChangeFunction);
 
-    auto moments = getReferenceMoments(nMoments);
+    auto moments = getFpeReferenceMoments(nMoments);
 
     QmomPtr->compute(moments.get());
 
@@ -115,10 +116,80 @@ void test_fokker_planck_equation()
     }
 }
 
+
+void testFokkerPlanckEquationVelocityDependentDrag()
+{
+
+    int nMomentsMin = 4;
+    int nMomentsMax = 12;
+    std::string qmomType = "QmomGaG";
+    double absTol = 1e-7;
+
+    // Use normalized Chebyshev moments as input for simplicity
+    std::shared_ptr<double[]> moments
+    (
+        static_cast<double*>(mkl_malloc(nMomentsMax*sizeof(double), MALLOC_ALIGN)),
+        &mkl_free
+    );
+    for (int k=0; k<nMomentsMax; k++) {
+        moments[k] = getChebyshevMoment(k);
+    }
+    for (int k=0; k<nMomentsMax; k++) {
+        moments[k] /= moments[0];
+    }
+
+    for (int nMoments=nMomentsMin; nMoments<=nMomentsMax; nMoments += 2)
+    {
+        auto coreInversion = CoreInversionAlgorithm::makeShared(
+            CoreInversionAlgorithmFactory::keys()[0],
+            nMoments
+        );
+
+        auto eigenSolver = RealEigenSolver::makeShared(
+            RealEigenSolverFactory::keys()[0],
+            nMoments/2,
+            EigenProblemType::EigenPairs
+        );
+        auto fokkerPlanck = PhysicalModelFactory::makeShared("FokkerPlanckVelocityDependentCd");
+
+        std::function<int(double * const, double * const, int, int, double*)> 
+            momentsRateOfChangeFunction
+            =
+            [&](double * const nodes, double * const weights, int nNodes, 
+                int nMoments, double* momentsRateOfChange) {
+                    return fokkerPlanck->computeMomentsRateOfChange(
+                        nodes, weights, nNodes, nMoments, momentsRateOfChange
+                    );
+            };
+
+        auto QmomPtr = Qmom::makeShared("QmomGaG", nMoments, coreInversion,
+            eigenSolver, nullptr, momentsRateOfChangeFunction);
+
+        QmomPtr->compute(moments.get());
+
+        auto momentsRateOfChange = QmomPtr->momentsRateOfChange();
+
+        // Zeroth moment must remain constant
+        assert(std::abs(momentsRateOfChange[0]) < absTol);
+
+        // All odd moments remain constant (zero)
+        for (int k=1; k<nMoments; k+=2) {
+            assert(std::abs(momentsRateOfChange[k]) < absTol);
+        }
+
+        // With the given setup, the second moment should decrease
+        assert(momentsRateOfChange[2] < 0);
+
+    }
+}
+
+
 int main()
 {
 
-    test_fokker_planck_equation();
+    testFokkerPlanckEquationConstantDrag();
+
+    testFokkerPlanckEquationVelocityDependentDrag();
 
     return 0;
 }
