@@ -100,12 +100,53 @@ int computeMomentsFromJacobiMatrix(double *mainDiagonal, double *firstDiagonal, 
  */
 double getChebyshevMoment(int order)
 {
+    if (order == 0) {
+        return constants::pi;
+    }
+
     if (order % 2 == 1)
         return 0;
 
     double sqrtPi = std::sqrt(constants::pi);
 
     return 2*sqrtPi*std::tgamma(0.5*(1 + order))/(order*std::tgamma(0.5*order));
+}
+
+
+/**
+ * @brief Linear moment transformation given shifting distance and scaling factor.
+ * 
+ * @param[in] shift Shifting distance.
+ * @param[in] scale Scaling factor.
+ * @param[in] nMoments Number of moments.
+ * @param[in] moments Original moment sequence.
+ * @param[out] transformedMoments Transformed moment sequence.
+ * @return int Dummy error flag.
+ */
+int linearMomentTransform(double shift, double scale, int nMoments, double *moments,
+    double *transformedMoments)
+{
+
+    for (int k=0; k<nMoments; k++) {
+
+        double sum = 0;
+        for (int j=0; j<k+1; j++) {
+
+            // This is a quick awfully slow solution, but ok for mere moment
+            // initializations
+            int binomialCoefficient = static_cast<int>(
+                std::tgamma(k+1)/(std::tgamma(j+1)*std::tgamma(k-j+1)) + 0.1
+            );
+            
+            sum += binomialCoefficient
+                   *std::pow(scale,  k - j)
+                   *std::pow(shift, j)
+                   *moments[k-j];
+        }
+        transformedMoments[k] = sum;
+    }
+
+    return 0;
 }
 
 
