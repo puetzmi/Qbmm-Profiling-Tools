@@ -12,11 +12,12 @@
 #ifndef MOMENT_UTILS_HPP
 #define MOMENT_UTILS_HPP
 
-#include "global_defs.hpp"
 #include <random>
 #include <mkl.h>
 #include <eigen3/Eigen/Eigen>
+#include "global_defs.hpp"
 #include "eigen_defs.hpp"
+#include "constants.hpp"
 
 
 /**
@@ -89,5 +90,23 @@ int computeMomentsFromJacobiMatrix(double *mainDiagonal, double *firstDiagonal, 
 
     return 0;
 }
+
+
+/**
+ * @brief Compute Chebyshev moment of the first kind.
+ * 
+ * @param order Moment order.
+ * @return double Chebyshev moment.
+ */
+double getChebyshevMoment(int order)
+{
+    if (order % 2 == 1)
+        return 0;
+
+    double sqrtPi = std::sqrt(constants::pi);
+
+    return 2*sqrtPi*std::tgamma(0.5*(1 + order))/(order*std::tgamma(0.5*order));
+}
+
 
 #endif // MOMENT_UTILS_HPP
