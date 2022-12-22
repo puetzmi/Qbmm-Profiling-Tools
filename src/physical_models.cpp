@@ -308,7 +308,6 @@ int HardSphereCollision1D::computeMomentsRateOfChange
 
 
     // Fox2010, Eq. (59) without advection and collisional flux term
-    // TODO: Check if limits are OK
     for (int i=0; i<nNodes; i++) {
 
         // update powers of velocity
@@ -330,7 +329,7 @@ int HardSphereCollision1D::computeMomentsRateOfChange
             // compute moment source terms
             for (int k=1; k<nMoments; k++) {
                 momentsRateOfChange[k] +=
-                    preFactor*weights[i]*weights[j]*g1Power_[1]*I0Functions_[k]();
+                    preFactor*weights[i]*weights[j]*gPower_[1]*I0Functions_[k]();
             }
         }
     }
