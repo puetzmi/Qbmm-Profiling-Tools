@@ -163,6 +163,10 @@ if (WITH_TESTING)
     add_executable(test_build_id tests/test_build_id.cpp)
     add_test(NAME test_build_id COMMAND test_build_id)
 
+    add_executable(test_moment_utils tests/test_moment_utils.cpp)
+    target_link_libraries(test_moment_utils $<LINK_ONLY:MKL::MKL>)
+    add_test(NAME test_moment_utils COMMAND test_moment_utils)
+
     add_executable(test_cholesky tests/test_cholesky.cpp)
     target_link_libraries(test_cholesky LinAlg $<LINK_ONLY:MKL::MKL>)
     add_test(NAME test_cholesky COMMAND test_cholesky)
