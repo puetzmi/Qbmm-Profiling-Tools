@@ -99,7 +99,7 @@ public:
      * @param typeName Type name corresponding to key in the static map in `PhysicalModelFactory`.
      * @return std::unique_ptr<PhysicalModel> Unique pointer to new `PhysicalModel` object.
      */
-    static std::unique_ptr<PhysicalModel> makeUnique(const std::string &typeName, unsigned int size);
+    static std::unique_ptr<PhysicalModel> makeUnique(const std::string &typeName);
     
 
     /**
@@ -108,7 +108,7 @@ public:
      * @param typeName Type name corresponding to key in the static map in `PhysicalModelFactory`.
      * @return std::shared_ptr<PhysicalModel> Shared pointer to new `PhysicalModel` object.
      */
-    static std::shared_ptr<PhysicalModel> makeShared(const std::string &typeName, unsigned int size);
+    static std::shared_ptr<PhysicalModel> makeShared(const std::string &typeName);
 
 
     /**

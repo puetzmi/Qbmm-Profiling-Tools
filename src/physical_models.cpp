@@ -32,6 +32,16 @@ PhysicalModel::~PhysicalModel()
 {
 }
 
+std::shared_ptr<PhysicalModel> PhysicalModel::makeShared(const std::string &typeName)
+{
+    return PhysicalModelFactory::makeShared(typeName);
+}
+
+std::unique_ptr<PhysicalModel> PhysicalModel::makeUnique(const std::string &typeName)
+{
+    return PhysicalModelFactory::makeUnique(typeName);
+}
+
 
 FokkerPlanckConstantCd::FokkerPlanckConstantCd(double gamma, double phi)
     :

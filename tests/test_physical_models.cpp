@@ -89,7 +89,7 @@ void testFokkerPlanckEquationConstantDrag()
         nMoments/2,
         EigenProblemType::EigenPairs
     );
-    auto fokkerPlanck = PhysicalModelFactory::makeShared("FokkerPlanckConstantCd");
+    auto fokkerPlanck = PhysicalModel::makeShared("FokkerPlanckConstantCd");
 
     std::function<int(double * const, double * const, int, int, double*)> 
         momentsRateOfChangeFunction
@@ -150,7 +150,7 @@ void testFokkerPlanckEquationVelocityDependentDrag()
             nMoments/2,
             EigenProblemType::EigenPairs
         );
-        auto fokkerPlanck = PhysicalModelFactory::makeShared("FokkerPlanckVelocityDependentCd");
+        auto fokkerPlanck = PhysicalModel::makeShared("FokkerPlanckVelocityDependentCd");
 
         std::function<int(double * const, double * const, int, int, double*)> 
             momentsRateOfChangeFunction
@@ -229,7 +229,7 @@ void testHardSphereCollision()
     // Test implementation using dynamic selection and default coefficient of
     // restitution (< 1) -> inelastic collision
     {
-        auto collisionModelPtr = PhysicalModelFactory::makeShared("HardSphereCollision1D");
+        auto collisionModelPtr = PhysicalModel::makeShared("HardSphereCollision1D");
 
         std::function<int(double * const, double * const, int, int, double*)> 
             momentsRateOfChangeFunction
