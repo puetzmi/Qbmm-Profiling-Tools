@@ -226,89 +226,37 @@ void testHardSphereCollision()
         EigenProblemType::EigenPairs
     );
 
-    // Test implementation using dynamic selection and default coefficient of
-    // restitution (< 1) -> inelastic collision
-    {
-        auto collisionModelPtr = PhysicalModel::makeShared("HardSphereCollision1D");
+    auto collisionModelPtr = PhysicalModel::makeShared("HardSphereCollision1D");
 
-        std::function<int(double * const, double * const, int, int, double*)> 
-            momentsRateOfChangeFunction
-            =
-            [&](double * const nodes, double * const weights, int nNodes, 
-                int nMoments, double* momentsRateOfChange) {
-                    return collisionModelPtr->computeMomentsRateOfChange(
-                        nodes, weights, nNodes, nMoments, momentsRateOfChange
-                    );
-            };
+    std::function<int(double * const, double * const, int, int, double*)> 
+        momentsRateOfChangeFunction
+        =
+        [&](double * const nodes, double * const weights, int nNodes, 
+            int nMoments, double* momentsRateOfChange) {
+                return collisionModelPtr->computeMomentsRateOfChange(
+                    nodes, weights, nNodes, nMoments, momentsRateOfChange
+                );
+        };
 
-        auto QmomPtr = Qmom::makeShared(qmomType, nMoments, coreInversion,
-            eigenSolver, nullptr, momentsRateOfChangeFunction);
+    auto QmomPtr = Qmom::makeShared(qmomType, nMoments, coreInversion,
+        eigenSolver, nullptr, momentsRateOfChangeFunction);
 
-        QmomPtr->compute(moments.get());
+    QmomPtr->compute(moments.get());
 
-        auto momentsRateOfChange = QmomPtr->momentsRateOfChange();
+    auto momentsRateOfChange = QmomPtr->momentsRateOfChange();
 
-        for (int k=0; k<nMoments; k++) {
-            std::printf("%7.6e\n", momentsRateOfChange[k]);
-        }
-
-        // Zeroth moment must remain constant
-        assert(std::abs(momentsRateOfChange[0]) < absTol);
-
-        // The first moment must remain constant due to conservation of momentum
-        assert(std::abs(momentsRateOfChange[1]) < absTol);
-
-        // The second moment (proportional to total kinetic energy) must decrease
-        assert(momentsRateOfChange[2] < 0);
-
+    for (int k=0; k<nMoments; k++) {
+        std::printf("%7.6e\n", momentsRateOfChange[k]);
     }
 
-    // Now test implementation with elastic collision
-    {
-        double coefficientOfRestitution = 1;
+    // Zeroth moment must remain constant
+    assert(std::abs(momentsRateOfChange[0]) < absTol);
 
-        std::shared_ptr<HardSphereCollision1D> collisionModelPtr
-        (
-            new HardSphereCollision1D
-            (
-                coefficientOfRestitution,
-                defaultModelConstants::particleDiameter,
-                nMoments
-            )
-        );
+    // The first moment must remain constant due to conservation of momentum
+    assert(std::abs(momentsRateOfChange[1]) < absTol);
 
-        std::function<int(double * const, double * const, int, int, double*)> 
-            momentsRateOfChangeFunction
-            =
-            [&](double * const nodes, double * const weights, int nNodes, 
-                int nMoments, double* momentsRateOfChange) {
-                    return collisionModelPtr->computeMomentsRateOfChange(
-                        nodes, weights, nNodes, nMoments, momentsRateOfChange
-                    );
-            };
-
-        auto QmomPtr = Qmom::makeShared(qmomType, nMoments, coreInversion,
-            eigenSolver, nullptr, momentsRateOfChangeFunction);
-
-        QmomPtr->compute(moments.get());
-
-        auto momentsRateOfChange = QmomPtr->momentsRateOfChange();
-
-        for (int k=0; k<nMoments; k++) {
-            std::printf("%7.6e\n", momentsRateOfChange[k]);
-        }
-
-        // Zeroth moment must remain constant
-        assert(std::abs(momentsRateOfChange[0]) < absTol);
-
-        // The first moment must remain constant due to conservation of momentum
-        assert(std::abs(momentsRateOfChange[1]) < absTol);
-
-        // The second moment (proportional to total kinetic energy) must remain
-        // constant during elastic collisions
-        assert(std::abs(momentsRateOfChange[2]) < absTol);
-
-    }
+    // The second moment (proportional to total kinetic energy) must decrease
+    assert(momentsRateOfChange[2] < 0);
 
 }
 
