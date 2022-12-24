@@ -324,22 +324,44 @@ private:
      */
     template <int momentOrder>
     double computeI0();
+    
+    /**
+     * @brief Compute the expression $I^{(1)}_{k,0,0}$ in $k$th order collision
+     * integral, see @cite Fox2010.
+     *
+     * @tparam momentOrder Moment order (one-dimensional).
+     * @return double Value of $I^{(1)}_{k,0,0}$, where $k$ is the given moment
+     * order.
+     */
+    template <int momentOrder>
+    double computeI1();
 
     /**
      * @brief Initialize vector of functions to compute the expression
      * $I_{k,0,0}^(0)$ in the collision integral, see @cite Fox2010.
      *
      * @param nMoments Number of moments.
-     * @return std::vector<std::function<double()> > 
+     * @return std::vector<std::function<double()> > Vector of functions.
      */
     std::vector<std::function<double()> >
         initializeI0Functions(int nMoments);
 
+    /**
+     * @brief Initialize vector of functions to compute the expression
+     * $I_{k,0,0}^(1)$ in the collision integral, see @cite Fox2010.
+     *
+     * @param nMoments Number of moments.
+     * @return std::vector<std::function<double()> > Vector of functions.
+     */
+    std::vector<std::function<double()> >
+        initializeI1Functions(int nMoments);
 
     double coefficientOfRestitution_;               ///< Coefficient of restitution (measure of elasticity), must be in [0, 1].
     double particleDiameter_;                       ///< Uniform particle diameter.
     std::vector<std::function<double()> > 
         I0Functions_;                               ///< Functions to compute I0 from particle velocities (see @cite Fox2010).
+    std::vector<std::function<double()> > 
+        I1Functions_;                               ///< Functions to compute I1 from particle velocities (see @cite Fox2010).
     double omega_;                                  ///< Measure of elasticity in I0 functions, see @cite Fox2010.
     double *omegaPower_;                            ///< Array of powers of `omega_`.
     double *g1Power_;                               ///< Array of powers of relative velocity (1D -> here only first component).

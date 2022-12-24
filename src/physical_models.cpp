@@ -256,6 +256,7 @@ HardSphereCollision1D::HardSphereCollision1D(double coefficientOfRestitution,
     coefficientOfRestitution_(coefficientOfRestitution),
     particleDiameter_(particleDiameter),
     I0Functions_(initializeI0Functions(nMomentsMax)),
+    I1Functions_(initializeI1Functions(nMomentsMax)),
     omega_(0.5*(coefficientOfRestitution_ + 1)), // Fox2010, Eq. (28)
     omegaPower_(static_cast<double*>(mkl_malloc(nMomentsMax*sizeof(double), MALLOC_ALIGN))),
     g1Power_(static_cast<double*>(mkl_malloc(nMomentsMax*sizeof(double), MALLOC_ALIGN))),
@@ -314,8 +315,6 @@ int HardSphereCollision1D::computeMomentsRateOfChange
     double c = std::min<double>(volumeFraction/0.63, 1);
     double g0 = (2 - c) / (2*(1 - c)*(1 - c)*(1 - c));
 
-    double preFactor = 6*g0/particleDiameter_;
-
 
     // Fox2010, Eq. (59) without advection and collisional flux term
     for (int i=0; i<nNodes; i++) {
@@ -338,8 +337,9 @@ int HardSphereCollision1D::computeMomentsRateOfChange
 
             // compute moment source terms
             for (int k=1; k<nMoments; k++) {
-                momentsRateOfChange[k] +=
-                    preFactor*weights[i]*weights[j]*gPower_[1]*I0Functions_[k]();
+                momentsRateOfChange[k] += g0*(
+                    6/particleDiameter_*weights[i]*weights[j]*gPower_[1]*I0Functions_[k]()
+                );
             }
         }
     }
