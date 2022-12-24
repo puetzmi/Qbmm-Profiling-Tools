@@ -145,6 +145,9 @@ target_link_libraries(qmom_linsolver LinAlg $<LINK_ONLY:MKL::MKL>)
 add_executable(qmom_eigensolver applications/qmom_eigensolver.cpp)
 target_link_libraries(qmom_eigensolver Qbmm LinAlg $<LINK_ONLY:MKL::MKL>)
 
+add_executable(qmom_subroutines_profiler applications/qmom_subroutines_profiler.cpp)
+target_link_libraries(qmom_subroutines_profiler QbmmProfiling Qbmm LinAlg PhysicalModels $<LINK_ONLY:MKL::MKL>)
+
 #############################################################################
 #############################################################################
 
