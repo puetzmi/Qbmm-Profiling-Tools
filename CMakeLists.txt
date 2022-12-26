@@ -135,18 +135,23 @@ add_library(PhysicalModels SHARED src/physical_models.cpp)
 # Build and link executables
 add_executable(qmom_core_inversion applications/qmom_core_inversion.cpp)
 target_link_libraries(qmom_core_inversion Qbmm LinAlg $<LINK_ONLY:MKL::MKL>)
+add_dependencies(qmom_core_inversion version)
 
 add_executable(general_eigensolver_benchmark applications/general_eigensolver_benchmark.cpp)
 target_link_libraries(general_eigensolver_benchmark LinAlg $<LINK_ONLY:MKL::MKL>)
+add_dependencies(general_eigensolver_benchmark version)
 
 add_executable(qmom_linsolver applications/qmom_linsolver.cpp)
 target_link_libraries(qmom_linsolver LinAlg $<LINK_ONLY:MKL::MKL>)
+add_dependencies(qmom_linsolver version)
 
 add_executable(qmom_eigensolver applications/qmom_eigensolver.cpp)
 target_link_libraries(qmom_eigensolver Qbmm LinAlg $<LINK_ONLY:MKL::MKL>)
+add_dependencies(qmom_eigensolver version)
 
 add_executable(qmom_subroutines_profiler applications/qmom_subroutines_profiler.cpp)
 target_link_libraries(qmom_subroutines_profiler QbmmProfiling Qbmm LinAlg PhysicalModels $<LINK_ONLY:MKL::MKL>)
+add_dependencies(qmom_subroutines_profiler version)
 
 #############################################################################
 #############################################################################
@@ -164,6 +169,7 @@ if (WITH_TESTING)
     enable_testing()
 
     add_executable(test_build_id tests/test_build_id.cpp)
+    add_dependencies(test_build_id version)
     add_test(NAME test_build_id COMMAND test_build_id)
 
     add_executable(test_moment_utils tests/test_moment_utils.cpp)
