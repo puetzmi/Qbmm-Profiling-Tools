@@ -47,8 +47,15 @@ int main (int argc, char *argv[]) {
     int nMatrices = parseArgument<int>(argc, argv, "n_matrices");
     int nMin = parseArgument<int>(argc, argv, "n_min");
     int nMax = parseArgument<int>(argc, argv, "n_max");
-    int nSizes = parseArgument<int>(argc, argv, "n_sizes");
     int nExecutions = parseArgument<int>(argc, argv, "n_exec");
+
+    int nSizes;
+    try {
+        nSizes = parseArgument<int>(argc, argv, "n_sizes");
+    }
+    catch (std::runtime_error const &e) {
+        nSizes = nMax - nMin + 1;
+    } 
 
     bool computeEigenvectors = parseArgument<bool>(argc, argv, "compute_eigenvectors");
     EigenProblemType problemType = EigenProblemType::EigenValsOnly;
