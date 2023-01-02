@@ -2,7 +2,9 @@
 #
 #!/usr/bin/env bash
 
-INTEL_ONEAPI_DEFAULT=/opt/intel/oneapi
+# Source configuration file
+SCRIPTPATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+source $(dirname $SCRIPTPATH)/intel-env-config.sh
 
 # Find Intel(R) OneAPI directory
 if [[ -z "${INTEL_ONEAPI_ROOT}" ]]; then
@@ -15,8 +17,8 @@ if [[ -z "${INTEL_ONEAPI_ROOT}" ]]; then
 fi
 
 # Set environment
-source $INTEL_ONEAPI_ROOT/mkl/latest/env/vars.sh
-source $INTEL_ONEAPI_ROOT/compiler/latest/env/vars.sh
-source $INTEL_ONEAPI_ROOT/mpi/latest/env/vars.sh
+source $INTEL_ONEAPI_ROOT/mkl/$INTEL_MKL_VERSION/env/vars.sh
+source $INTEL_ONEAPI_ROOT/compiler/$INTEL_COMPILER_VERSION/env/vars.sh
+source $INTEL_ONEAPI_ROOT/mpi/$INTEL_MPI_VERSION/env/vars.sh
 export CC=icx
 export CXX=icpx

@@ -115,7 +115,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     set(MKL_THREADING gnu_thread)
 endif()
 set(MKL_INTERFACE lp64)
-find_package(MKL CONFIG REQUIRED)
+find_package(MKL $ENV{INTEL_MKL_VERSION} CONFIG REQUIRED)
 
 # Set input/output directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src

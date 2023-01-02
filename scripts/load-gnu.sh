@@ -2,7 +2,9 @@
 #
 #!/usr/bin/env bash
 
-INTEL_ONEAPI_DEFAULT=/opt/intel/oneapi
+# Source Intel(R) configuration file to get MKL version
+SCRIPTPATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+source $(dirname $SCRIPTPATH)/intel-env-config.sh
 
 # Find Intel(R) OneAPI directory if MKLROOT is not set
 if [[ -z "${MKLROOT}" ]]; then
