@@ -10,7 +10,7 @@ The tools/packages required for various purposes are listed below (the version n
  * **Building/running libraries and applications**
    * A C/C++ compiler. Compilers that have been tested are
      * the GNU C++ Compiler (11.2.0)
-     * the Intel&reg; oneAPI DPC++/C++ Compiler (2022.2.0)
+     * the Intel&reg; oneAPI DPC++/C++ Compiler (2022.2.0,2023.0.0)
    * The Intel&reg; oneAPI Math Kernel Library (2022.2.0)
    * CMake (3.22.1)
  * **Building the documentation**
