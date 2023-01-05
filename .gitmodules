@@ -1,0 +1,4 @@
+[submodule "numerical_study"]
+	path = numerical_study
+	url = ../qbmm-profiling-study.git
+    ignore = dirty
