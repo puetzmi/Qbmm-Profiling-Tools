@@ -4,7 +4,7 @@
 export INTEL_ONEAPI_ROOT=/opt/intel/oneapi
 
 # OneAPI compiler version (directory must exist in compiler directory)
-export INTEL_COMPILER_VERSION=latest
+export INTEL_COMPILER_VERSION=2023.0.0
 
 # Intel(R) MKL version (directory must exist in compiler directory)
 #export INTEL_MKL_VERSION=latest
