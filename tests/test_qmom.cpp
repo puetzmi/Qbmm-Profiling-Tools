@@ -78,34 +78,44 @@ int main ()
         for (auto& coreInversionType : coreInversionTypes) {
             for (auto& eigenSolverType : eigenSolverTypes) {
                 for (auto& linearSolverType : linearSolverTypes) {
+                    
+                    std::vector<std::string> qmomTypes = {"QmomStd", "QmomGaG"};
+                    for (auto& qmomType : qmomTypes) {
 
-                    auto coreInversionPtr = CoreInversionAlgorithm::makeShared(coreInversionType, nMom);
-                    EigenProblemType problemType = EigenProblemType::EigenValsOnly;
+                        auto coreInversionPtr = CoreInversionAlgorithm::makeShared(coreInversionType, nMom);
+                        EigenProblemType problemType = EigenProblemType::EigenValsOnly;
 
-                    // If linear solver type is none, use eigenvectors to compute weights
-                    if (linearSolverType == LinearSolverFactory::noneKey()) {
-                        problemType = EigenProblemType::EigenPairs;
-                    }
-                    auto eigenSolverPtr = RealEigenSolver::makeShared(eigenSolverType, nMom/2, problemType);
-                    auto linearSolverPtr = LinearSolver::makeShared(linearSolverType, nMom/2);
+                        // If linear solver type is none, use eigenvectors to compute weights
+                        if (linearSolverType == LinearSolverFactory::noneKey()) {
+                            problemType = EigenProblemType::EigenPairs;
+                        }
+                        auto eigenSolverPtr = RealEigenSolver::makeShared(eigenSolverType, nMom/2, problemType);
+                        auto linearSolverPtr = LinearSolver::makeShared(linearSolverType, nMom/2);
 
-                    auto qmomObj = Qmom::makeShared("QmomGaG", nMom, coreInversionPtr, 
-                        eigenSolverPtr, linearSolverPtr, computeMomentsRateOfChange);
-                    qmomObj->compute(moments);
-                    qmomObj->computeMoments(0, nMom, momentsReconst);
-                    qmomObj->computeMomentsRateOfChange(nMom);
+                        auto qmomObj = Qmom::makeShared(qmomType, nMom, coreInversionPtr, 
+                            eigenSolverPtr, linearSolverPtr, computeMomentsRateOfChange);
+                        qmomObj->compute(moments);
+                        qmomObj->computeMoments(0, nMom, momentsReconst);
+                        qmomObj->computeMomentsRateOfChange(nMom);
 
-                    // Check if the resulting moments reconstructed from the computed quadrature
-                    // are approximately equal to the given moments
-                    for (int k=0; k<nMom; k++) {
+                        if (qmomType == "QmomGaG") {
+                            assert(qmomObj->numberOfNodes() == nMom - 1);
+                        }
+                        else if (qmomType == "QmomGaG") {
+                            assert(qmomObj->numberOfNodes() == nMom/2);
+                        }
+                        // Check if the resulting moments reconstructed from the computed quadrature
+                        // are approximately equal to the given moments
+                        for (int k=0; k<nMom; k++) {
 
-                        double relError = std::fabs((moments[k] - momentsReconst[k])/moments[k]);
-                        assert(relError < relTol);
+                            double relError = std::fabs((moments[k] - momentsReconst[k])/moments[k]);
+                            assert(relError < relTol);
 
-                        // With the rate-of-change function as defined above, the `momentsRateOfChange`
-                        // variable should also equal the original moments
-                        relError = std::fabs((moments[k] - qmomObj->momentsRateOfChange()[k])/moments[k]);
-                        assert(relError < relTol);
+                            // With the rate-of-change function as defined above, the `momentsRateOfChange`
+                            // variable should also equal the original moments
+                            relError = std::fabs((moments[k] - qmomObj->momentsRateOfChange()[k])/moments[k]);
+                            assert(relError < relTol);
+                        }
                     }
                 }
             }
