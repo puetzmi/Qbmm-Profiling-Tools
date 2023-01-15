@@ -288,6 +288,16 @@ public:
 
 
     /**
+     * @brief Get number of nodes.
+     * 
+     * @return int Number of nodes.
+     */
+    inline int numberOfNodes() const {
+        return nNodes_;
+    }
+
+
+    /**
      * @brief Set the Jacobi matrix "manually" (e.g. to use exact recurrence coefficients).
      * 
      * @param mainDiagonal Main diagonal elements.
