@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 
     // Tolerances for verification of results
     double absTol = 1e-10;
-    double relTol = 1e-8;
+    double relTol = 1e-6;
 
     // Read command line parameters
     int nMoments = parseArgument<int>(argc, argv, "n_moms");
@@ -50,6 +50,9 @@ int main(int argc, char *argv[])
     std::string setupFilename = parseArgument<std::string>(argc, argv, "setup_file");
     std::string momentsFilename = parseArgument<std::string>(argc, argv, "moments_file");
     std::string outputFilePrefix = parseArgument<std::string>(argc, argv, "outfile_prefix");
+
+    // When solving linear system the error can get relatively large with a lot of moments...
+    relTol *= nMoments*nMoments;
 
     // Read algorithms / physical models to be tested from setup file
     auto const setup = parseSetupFile(setupFilename);
@@ -146,6 +149,10 @@ int main(int argc, char *argv[])
 
     int jacobiMatrixSize = nMoments/2;
 
+    double *reconstructedMoments = static_cast<double*>(
+            mkl_malloc(nMoments*sizeof(double), MALLOC_ALIGN)
+    );
+
     // Loop over configurations
     configNo = 0;
     for (const auto &configuration : configurations)
@@ -183,7 +190,7 @@ int main(int argc, char *argv[])
         
         const std::string &qmomType = configuration.at(qmomTypeKey);
         std::shared_ptr<Qmom> qmomPtr = Qmom::makeShared(qmomType, nMoments, 
-            nullptr, eigenSolver, linearSolver, computeMomentsRateOfChange);
+            coreInversion, eigenSolver, linearSolver, computeMomentsRateOfChange);
         
         QmomProfiler qmomProfiler(nExecutions, qmomPtr);
 
@@ -194,11 +201,14 @@ int main(int argc, char *argv[])
 
             qmomProfiler.compute(mom);
 
+            int nNodes = qmomPtr->numberOfNodes();
+            computeMomentsFromQuadrature(
+            qmomPtr->quadratureNodes().get(),
+                    qmomPtr->quadratureWeights().get(), nNodes, nMoments, reconstructedMoments);
+                    
             // Ensure correctness of the results
             for (int k=0; k<nMoments; k++) {
-                double moment = 1.1*mom[k] - 1e50;  // arbitrary value different from correct one
-                qmomPtr->computeMoments(k, k, &moment);
-                bool ok = std::abs(mom[k] - moment) < absTol + relTol*std::abs(mom[k]);
+                bool ok = std::abs(mom[k] - reconstructedMoments[k]) < absTol + relTol*std::abs(mom[k]);
                 // this should never happen
                 if (!ok) {
                     throw std::runtime_error("Moment comparison failed.");
@@ -218,6 +228,7 @@ int main(int argc, char *argv[])
     closeOutputFile(dataOutputFile);
 
     mkl_free(moments);
+    mkl_free(reconstructedMoments);
 
     std::printf("Done. (%s)\n", getTimestamp().data());
 
