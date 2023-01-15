@@ -29,7 +29,7 @@
  * @param[in] numberOfMoments Number of moments, which is the maximum moment order + 1.
  * @param[out] moments The computed moment sequence.
  */
-void computeMomentsFromQuadrature(double *nodes, double *weights, int numberOfNodes, 
+void computeMomentsFromQuadrature(const double *nodes, const double *weights, int numberOfNodes, 
                                     int numberOfMoments, double *moments)
 {
 
