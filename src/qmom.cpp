@@ -319,5 +319,7 @@ int QmomGaG::computeQuadrature(double *moments)
         quadratureWeights_[j] *= 0.5;
     }
 
+    gamma_[N_-2] /= constants::sqrt2;
+
     return info;
 }
